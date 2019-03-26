@@ -65,7 +65,20 @@ def init_eventcodes(G):
             'nf_goingup':160,
             'nf_goingdown':150,
             
+            'nf_hit': 170,
+
             
+            
+            'b_emg_below': 211,
+            'e_emg_below': 219,
+            
+            'b_emg_above': 221,
+            'e_emg_above': 229,
+            
+            'emg_goingup': 220,
+            'emg_goingdown': 210,
+
+            'emg_hit': 230
             
             
             

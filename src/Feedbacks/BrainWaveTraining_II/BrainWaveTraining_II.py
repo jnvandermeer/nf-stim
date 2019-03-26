@@ -91,6 +91,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.EX_NOREGTEXT = 'do not regulate'
         self.EX_TINSTR = 2.0
         self.EX_THERMOCLIMS = ['c4572e', '4fc42e']
+        self.EX_EMG_THERMOCLIMS = ['00ff00','ff0000'] # should be green on the bottom, and red if it's too high:
+
         self.EX_GRAPHICSMODE = 'line'
         self.EX_STAIRCASEMANIPULATION = 'offset'
         self.EX_POINTS_PENALTY = -2
@@ -181,6 +183,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         CP['thrContainer'] = [0.5]
         CP['TJITT'] = [1]
         CP['CURRENTPART'] = [None]
+        CP['CURRENTTIME'] = [None]
         CP['instruction'] = 'arrowup'  # choose between 'arrowup' and 'donotreg'
         CP['corr_incorr'] = [None]  # chooose between 'st_correct' and 'st_incorrect'
         CP['TUNING_TYPE'] = self.EX_TUNING_TYPE # ']  # copy/paste into CP, to be (changed) later during the experiment...
@@ -192,8 +195,9 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
 
         CP['hitError'] = []
         CP['hit'] = []
-        CP['emgThrContainer'] = [None]
-        CP['emgContainer'] = [None]
+        CP['emgThrContainer'] = [0.2]
+        CP['emgContainer'] = [0.1]
+        CP['playNFSounds'] = False
 
         self.CP = CP
         
@@ -258,6 +262,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         v['EX_NOREGTEXT']                   = self.EX_NOREGTEXT
         v['EX_TINSTR']                      = self.EX_TINSTR
         v['EX_THERMOCLIMS']                 = self.EX_THERMOCLIMS
+        v['EX_EMG_THERMOCLIMS']             = self.EX_EMG_THERMOCLIMS
+
         v['EX_GRAPHICSMODE']                = self.EX_GRAPHICSMODE
 
         v['EX_STAIRCASEMANIPULATION']       = self.EX_STAIRCASEMANIPULATION
@@ -428,6 +434,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         if G['EX_TESTNFNOISE'] is True:
             self.loop.create_task(pr['GenTestSignal'](G, st, CP))
+            self.loop.create_task(pr['GenTestSignalEMG'](G, st, CP))
 
         logging.flush()
         G['logging']=logging
@@ -530,14 +537,22 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         # but we can change properties of the data --> so can draw stff!
         
         for key in data.keys():
-            self.CP[key] = data[key]
+            
+            
+            if key in ['hit', 'hitError']:
+                self.CP[key].append(data[key])
+            else:
+                self.CP[key] = data[key] # assign stuff!
+                
             if key == 'nfsignalContainer':
                 self.G['eh'].send_message('recv_nfsignal')
-            elif key == 'corr_incorr:':
-                self.G['eh'].send_message('recv_thr')
             elif key == 'thrContainer':
+                self.G['eh'].send_message('recv_thr')
+            elif key == 'corr_incorr:':
                 self.G['eh'].send_message('recv_corr_incorr')
 
+    
+        
         
         #CP['nfsignalContainer'] = [0]
         #CP['thrContainer'] = [0.5]

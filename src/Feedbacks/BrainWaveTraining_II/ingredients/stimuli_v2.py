@@ -107,6 +107,7 @@ G['EX_SQUARESIZE'] = 0.25 # in case we have the square NF...
 
 G['EX_THRLINEWIDTH']=2
 G['EX_THERMOCLIMS']=['c4572e', '4fc42e']  # in hex format
+G['EX_EMG_THERMOCLIMS'] = ['00ff00','ff0000'] # should be green on the bottom, and red if it's too high:
 
 G['EX_COLORGAP'] = 1  # the gap between colors when thr is passed. -- uses the colorcalculator
 
@@ -142,8 +143,8 @@ G['EX_SND_HIGHESTTONE'] = 48
 
 
 
-G['MONITOR_PIXWIDTH']=1280
-G['MONITOR_PIXHEIGHT']=1024
+G['MONITOR_PIXWIDTH']=800
+G['MONITOR_PIXHEIGHT']=600
 G['MONITOR_WIDTH']=40.  # width of screen
 G['MONITOR_HEIGHT']=30.  # height of screen
 G['MONITOR_DISTANCE']=70.  # distance to screen
@@ -170,6 +171,7 @@ CP['nfsignalContainer'] = [0]
 CP['thrContainer'] = [0.5]
 CP['TJITT'] = [1]
 CP['CURRENTPART'] = [None]
+CP['CURRENTTIME'] = [None]     # for making sure we're changing the required time accordingly (will be used by EMG) 
 CP['instruction'] = 'arrowup'  # choose between 'arrowup' and 'donotreg'
 CP['corr_incorr'] = [None]  # chooose between 'st_correct' and 'st_incorrect'
 CP['TUNING_TYPE'] = G['EX_TUNING_TYPE']  # copy/paste into CP, to be (changed) later during the experiment...
@@ -181,8 +183,9 @@ CP['EX_TXT_COUNTER'] = G['EX_TXT_COUNTER']
 
 CP['hitError'] = []
 CP['hit'] = []
-CP['emgThrContainer'] = [None]
-CP['emgContainer'] = [None]
+CP['emgThrContainer'] = [0.2] # just some starting values...
+CP['emgContainer'] = [0.1]
+CP['playNFSounds'] = False
 
 
 
@@ -190,7 +193,7 @@ CP['emgContainer'] = [None]
 #%%  getting the window
 
 def init_window(G):
-    win=visual.Window(size=(1400,900), fullscr=False, screen=0, allowGUI=True, winType='pyglet', waitBlanking=False)
+    win=visual.Window(size=(800,600), fullscr=False, screen=0, allowGUI=True, winType='pyglet', waitBlanking=False)
     G['win']=win
 
 
@@ -383,7 +386,7 @@ def make_stimuli(G, CP):
     thermo_lines=make_dashed(win, G, (-0.6, CP['thrContainer'][0]*G['EX_SCALING'][1]), (0.6, CP['thrContainer'][0]*G['EX_SCALING'][1]), 15, 0.5)
     
     
-    thermo_thermometer = thermo_thermometer=visual.ShapeStim(win, lineWidth=1.5, lineColor='white', fillColor='green', vertices=[(-0.25, -1), (-0.25, 1), (0.25, 1), (0.25, -1)])
+    thermo_thermometer=visual.ShapeStim(win, lineWidth=1.5, lineColor='white', fillColor='green', vertices=[(-0.25, -1), (-0.25, 1), (0.25, 1), (0.25, -1)])
     thermo_thermometer_silent = visual.ShapeStim(win, lineWidth=1.5, lineColor='white', fillColor='grey', vertices=[(-0.25, -1), (-0.25, CP['thrContainer'][0]), (0.25, CP['thrContainer'][0]), (0.25, -1)])
     
     items=[thermo_thermometer, thermo_thermometer_silent] #, thermo_thermometer_silent]
@@ -472,7 +475,7 @@ def make_stimuli(G, CP):
     tfactor=1.03
     
     # the EMG Feedback:    
-    st['emg_feedback_window'] = visual.Rect(G['win'], width=twidth*tfactor, height=theight*tfactor, pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                fillColor=[-0.5,-0.5,-0.5],  lineColor=[1,1,1])
+    st['emg_feedback_window'] = visual.Rect(G['win'], width=twidth*tfactor, height=theight*tfactor, pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                fillColor=[0, 0, 0],  lineColor=[1,1,1])
     st['emg_feedback']        = visual.Rect(G['win'], width=twidth,         height=theight,         pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                 fillColor=[0.5,-0.5,-0.5], lineColor=[-0.8,-0,-0.1], lineWidth=0)
     
     EMG_THR_FACTOR=0.2
@@ -497,6 +500,27 @@ def make_stimuli(G, CP):
     
     st['counter']
 
+    
+    
+    sounds_dir = os.path.join(os.path.dirname(__file__),'sounds')
+    
+    # the sounds: -- 24 to 39
+    st['sound-success'] = [
+            sound.backend_pygame.SoundPygame(value=
+                                             os.path.join(
+                                                     sounds_dir, 
+                                                     'tone-%d.wav' % x)
+                                             ) 
+                                             for x in range(24,40)
+                                             ]
+    
+        
+    st['sound-emg'] = sound.backend_pygame.SoundPygame(value=os.path.join(sounds_dir,'new-error-1.wav'))
+        
+    print('..........')
+    print(sys.argv[0])
+    # print(__file__)
+    
     
     return st
 
@@ -848,37 +872,37 @@ def define_experiment(G, st, pr, CP):
     
     # for each trial type, show what's going the be on the screen...
     ex['line']['train']['sequence']             = ['instruction', 'pause', 'feedback', 'veryshortpause1', 'jitterpause' ]
-    ex['line']['train']['instruction']          = ([],                                  TINSTR,      [st['background'], st['crosshair']],                                                             ['instruction','itrain'], [])
-    ex['line']['train']['pause']                = ([pr['pickRandomJitter']],            TPAUSE,      [st['background']],                                                            [], [])
-    ex['line']['train']['feedback']             = ([pr['LineCalculations']],            TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','btrain'], ['eFB','etrain'])
-    ex['line']['train']['veryshortpause1']      = ([],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
-    ex['line']['train']['veryshortpause2']      = ([],                                  TVSP,        [st['background']],                                                            [], [])
-    ex['line']['train']['mark']                 = ([],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV','xorvtrain'], [])
-    ex['line']['train']['jitterpause']          = ([],                                  CP['TJITT'], [st['background']],                                                            ['bISI','bisitrain'], ['eISI','eisitrain'])
+    ex['line']['train']['instruction']          = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                             ['instruction','itrain'], [])
+    ex['line']['train']['pause']                = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['train']['feedback']             = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','btrain'], ['eFB','etrain'])
+    ex['line']['train']['veryshortpause1']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
+    ex['line']['train']['veryshortpause2']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['train']['mark']                 = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV','xorvtrain'], [])
+    ex['line']['train']['jitterpause']          = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            ['bISI','bisitrain'], ['eISI','eisitrain'])
     
     
     ex['line']['transfer']['sequence']          = ['instruction', 'pause', 'feedback', 'veryshortpause', 'jitterpause' ]
-    ex['line']['transfer']['instruction']       = ([],                                  TINSTR,      [st['background'], st['crosshair']],                                   ['instruction','itransfer'], [])
-    ex['line']['transfer']['pause']             = ([pr['pickRandomJitter']],            TPAUSE,      [st['background']],                                                            [], [])
-    ex['line']['transfer']['feedback']          = ([pr['LineCalculations']],            TFB,         [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
-    ex['line']['transfer']['veryshortpause']    = ([],                                  TVSP,        [st['background']],                                                            [], [])
-    ex['line']['transfer']['mark']              = ([],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV', 'xorvtransfer'], [])
-    ex['line']['transfer']['jitterpause']       = ([],                                  CP['TJITT'], [st['background']],                                                            ['bISI','bisitransfer'], ['eISI','eisitransfer'])
+    ex['line']['transfer']['instruction']       = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                   ['instruction','itransfer'], [])
+    ex['line']['transfer']['pause']             = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['transfer']['feedback']          = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
+    ex['line']['transfer']['veryshortpause']    = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['transfer']['mark']              = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV', 'xorvtransfer'], [])
+    ex['line']['transfer']['jitterpause']       = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            ['bISI','bisitransfer'], ['eISI','eisitransfer'])
     
     
     ex['line']['observe']['sequence']           = ['instruction', 'pause', 'feedback', 'veryshortpause', 'jitterpause' ]
-    ex['line']['observe']['instruction']        = ([],                                  TINSTR,      [st['background'], st['crosshair']],                                   ['instruction','iobserve'], [])
-    ex['line']['observe']['pause']              = ([pr['pickRandomJitter']],            TPAUSE,      [st['background']],                                                            [], [])
-    ex['line']['observe']['feedback']           = ([pr['LineCalculations']],            TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','bobserve'], ['eFB','eobserve'])
-    ex['line']['observe']['veryshortpause']     = ([],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
-    ex['line']['observe']['jitterpause']        = ([],                                  CP['TJITT'], [st['background']],                                                            ['bISI','bisiobserve'], ['eISI','eisiobserve'])
+    ex['line']['observe']['instruction']        = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                   ['instruction','iobserve'], [])
+    ex['line']['observe']['pause']              = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['observe']['feedback']           = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','bobserve'], ['eFB','eobserve'])
+    ex['line']['observe']['veryshortpause']     = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
+    ex['line']['observe']['jitterpause']        = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            ['bISI','bisiobserve'], ['eISI','eisiobserve'])
 
     
     ex['line']['rest']['sequence']              = ['instruction', 'pause', 'feedback', 'jitterpause' ]
-    ex['line']['rest']['instruction']           = ([],                                  TINSTR,      [st['background'], st['crosshair']],                                   ['instruction','irest'], [])
-    ex['line']['rest']['pause']                 = ([pr['pickRandomJitter']],            TPAUSE,      [st['background']],                                                            [], [])
-    ex['line']['rest']['feedback']              = ([pr['LineCalculations']],            TFB,         [st['background'], st['crosshair']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
-    ex['line']['rest']['jitterpause']           = ([],                                  CP['TJITT'], [st['background']],                                                            ['bISI','bisirest'],['eISI','eisirest'])
+    ex['line']['rest']['instruction']           = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                   ['instruction','irest'], [])
+    ex['line']['rest']['pause']                 = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            [], [])
+    ex['line']['rest']['feedback']              = ([pr['HandleEMGLine']],                                  TFB,         [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
+    ex['line']['rest']['jitterpause']           = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']],                                                            ['bISI','bisirest'],['eISI','eisirest'])
 
 
 
@@ -943,48 +967,509 @@ def define_experiment(G, st, pr, CP):
 #%% The PROGRAMS
 
 
-
-@asyncio.coroutine
-def HandleNF(G, st, CP):
+@asyncio.coroutine    
+def HandleNFLine(G, st, CP):
     '''
-    What this function does (coroutine):
-        a) depending on the NF signal -- change the line
-        b) keep track of patches
-        c) check for any triggers (i.e. successes) IF any occur:
-            1) make current Patch Green (or last one)
-            2) Play Sound according to intensity that was given (?)
-            3) Update the Counter
-            4) Provide the necessary triggers
+    This will start up, for a period specified within the G, changes to the shapes for the LINESTIM type of NF
+    
+    Todo:
+        - remove the auto-threshold-updating machinery
+        - update EMG + EMG Threshold 'bar', using code from below RED = wrong, GREEN = good - that code excursion was useful after all..
+        - don't draw in (yet) the patches - do current patch when condition is met (i.e., it's 1)
+        ... I think that is it for this.
+        
+            What this function does (coroutine):
+        a) depending on the NF signal -- change the line (done))
+        b) keep track of patches (done))
+        c) check for any triggers (i.e. successes) IF any occur: (done))
+            1) make current Patch Green (or last one) (done solved with opacity))
+            2) Play Sound according to intensity that was given (?) (done))
+            3) Update the Counter (will do in another function + program)
+            4) Provide the necessary triggers (done))
+        
+        Usage - you can start it any time. the ex stuff will determine WHICH stimulus components will actually be visible and drawn. So you
+        could NOT draw the line, etc. It will be updated here - still tracked, but the draw() won't be called at all.
+        
+        # so that is useful for - Transfer - Observe - Rest - Train.
+        # see the notes which 
+        
+        
+    
     '''
     
+    win = G['win']  # our window..
+    # tmax = G['EX_TFB']   # this is how long we should display the stimulus on screen.
+    thrContainer = CP['thrContainer']  # this is the threshold -- probably also set by on_control_event...
+    nfvalueContainer = CP['nfsignalContainer']  # so this will be set (hopefully) by the handle_control_event...
+    nfsignalContainer= CP['nfsignalContainer']
+    scaling = G['EX_SCALING']  # to scale... implementation of pos to be done later..
+    hit=CP['hit']
     
-    pass
+    
+    patch_color = G['EX_PATCHCOLOR']
+    hb, he = G['EX_THERMOCLIMS']
+    colorgap = G['EX_COLORGAP']
+
+    cfb = st['cfb']  # this is the shape of the FB itself - the square, or bird, or fish...
+    thrline = st['thrline']  # set positions...            
+        
+    CURRENTPART=CP['CURRENTPART'][0]
+    CURRENTTIME=CP['CURRENTTIME'][0]
+    tmax = CURRENTTIME
+    
+    
+    # see if we're playing our sounds:
+    if CURRENTPART in ['train', 'transfer']:
+        CP['playNFSounds'] = True
+        
+    if CURRENTPART in ['observe','rest']:
+        CP['playNFSounds'] = False
+    
+    
+    f_get_chime_index=lambda x: int(round(float(len(st['chimes']) - 1) / 10 * x) + 1)
+    
+    
+    
+    nf_line = st['nf_line'][0]        # this is a shapestim
+    patches = st['patches']           # this is a list of shapestims
+    
+    # trialtype = CP['TrialType'][0] -- we also don't use the trialtype, I don't think..
+    # this_staircase = G['staircases'][trialtype]     # don't do staircase..
+    # obtain next response from staircase
+    # nextTuningVal = this_staircase.next()
+    # check if the tuning type is THR --> change THR
+    #if CP['TUNING_TYPE'] == 'thr':
+    #     CP['thrContainer'][0] = nextTuningVal -- we don't tamper with the thr value - let the rt module deal with that...
+    
+    
+    # should work...
+    thr=thrContainer[0]
+    # ypos_for_color=nfvalueContainer[0]
+    ypos_for_color=tuning(CP, nfvalueContainer[0])
+    
+    nf_line.setVertices((0, 0)) # this should reset it without this being re-initialized again/
+    # self.st['nf_line'][0] = visual.ShapeStim(self.win, vertices=[(0, 0)], closeShape=False, lineColor='lightblue', size=self.scaling, lineWidth=0)
+    patches[:]=[]  # empty this list
+    # self.st['patches'] = []
+    
+
+    # deal with the thresh-line:
+    for l in thrline:
+        oldstart = l.start
+        oldend = l.end
+        l.start = (oldstart[0]  , thrContainer[0]) 
+        l.end = (oldend[0]      , thrContainer[0]) 
 
 
+    # deal with the NF line:
+    vertices=[]
+    vertices.append( (-1, ypos_for_color) )
+    nf_line.setVertices(vertices)
+
+
+
+    # initialize the ypos:    
+    if ypos_for_color > thrContainer[0]:
+        # make a new patch..
+        G['eh'].send_message('b_nf_above')
+        rnew, gnew, bnew = my_color_calculator(hb, he, thr, colorgap, ypos_for_color, 1, -1)   
+        patch_color = (rnew, gnew, bnew)
+        
+        patch_vert=[]
+        ABOVE_PREV = True
+        patch_vert.append((-1,  thrContainer[0]      ))
+        patch_vert.append((-1+0.0001,  ypos_for_color  ))
+        patch_vert.append((-1+0.0001,  thrContainer[0]      ))
+
+        newpatch = visual.ShapeStim(win, vertices=patch_vert, fillColor=patch_color, size=scaling, lineWidth=0, opacity=0)
+        patches.append(newpatch)
+    else:
+        G['eh'].send_message('b_nf_below')
+        ABOVE_PREV = False
+    
+    
+    # tlist=[]  # needed to calculate the win condition
+    # ylist=[]  # this too -- needed to calculate the win condition
+    # thrlist=[]  # yes, this too. To be ultra-flexible.
+    curtime=0
+    curi=0
+    cl=clock.Clock()  # yeah...well, we make a second clock. should not be too off in seconds.
+    
+    lastypos=0.
+    while curtime < tmax:
+        
+        # time.sleep(G['EX_PR_SLEEPTIME'])
+        
+        curtime=cl.getTime()
+        curi += 1
+        # patchi += 1
+        thr=thrContainer[0]  # might've changed in the meantime?
+        
+        xpos = -1 + 2 * curtime / tmax
+        #ypos = nfvalueContainer[0]
+        ypos = tuning(CP, nfvalueContainer[0])
+
+        # tlist.append(curtime)
+        # ylist.append(ypos)
+        # thrlist.append(thr)
+        
+        
+        vertices.append((xpos, ypos))
+        # nf_line.setVertices(vertices)  # ok, we did the line.. now on to:
+        nf_line.setVertices(vertices)
+        
+        # replacement_line = visual.ShapeStim(self.win, vertices=vertices, closeShape=False, lineColor='lightblue', size=scaling)
+        # nf_line[0] = replacement_line
+        
+        cfb.setPos((xpos * scaling[0], ypos * scaling[1]))  # ok, so that was the NF stimulus
+        # print(cfb.pos)
+        
+        # if patchi>0:
+        # now comes fun part -- i.e. the patches.
+        
+        
+        
+
+        if ypos > thrContainer[0]:
+            ABOVE=True
+            
+            if ABOVE_PREV is True:
+                # just add one vertex..
+
+                if ypos > lastypos:
+                    ypos_for_color = ypos
+                rnew, gnew, bnew = my_color_calculator(hb, he, thr, colorgap, ypos_for_color, 1, -1)   
+                patch_color = (rnew, gnew, bnew)                        
+                        
+                patch_vert.pop()
+                patch_vert.append((xpos, ypos))
+                patch_vert.append((xpos, thr))
+
+                thispatch = patches[-1]
+                thispatch.setVertices(patch_vert)
+                thispatch.setFillColor(patch_color, colorSpace='rgb')
+                # pdb.set_trace()
+                # replacement = visual.ShapeStim(self.win, vertices=patch_vert, fillColor=self.patch_color, size=self.scaling, lineWidth=0)
+                # current_patch.setVertices(patch_vert)
+                # patches[-1] = replacement
+                
+                lastypos=ypos
+            
+            else:
+                
+                G['eh'].send_message('e_nf_below')
+                G['eh'].send_message('nf_goingup')
+                G['eh'].send_message('b_nf_above')
+                patch_vert=[]
+                old_xpos = vertices[-2][0]
+                old_ypos = vertices[-2][1]
+                
+                xbegin = old_xpos + (xpos-old_xpos) * (ypos-thr) / (ypos - old_ypos + 1)
+                ybegin = thr
+                
+                patch_vert.append((xbegin, ybegin))  # we just will close off this patch, then..
+                patch_vert.append((xpos, ypos))
+                patch_vert.append((xpos, thr))
+                
+                rnew, gnew, bnew = my_color_calculator(hb, he, thr, colorgap, ypos_for_color, 1, -1)  
+                patch_color=(rnew, gnew, bnew)
+                
+                # patches.append(visual.ShapeStim(self.win, vertices=patch_vert, closeShape=True, fillColor=self.patch_color, lineWidth =0, autoLog=False))
+                # make a totally NEW patch
+                newpatch = visual.ShapeStim(win, vertices=patch_vert, fillColor=patch_color, size=scaling, lineWidth=0, opacity=0)
+                patches.append(newpatch)
+                # so, this is the first one... so we need the xpos of the previous...
+            
+        else:
+            ABOVE = False
+            #patches.append(visual.ShapeStim(self.win, vertices=patch_vert, closeShape=True, size=stimSize, fillColor=self.patch_color, lineWidth =0, autoLog=False))
+
+            if ABOVE_PREV is False:
+                pass 
+            else:
+                
+                G['eh'].send_message('e_nf_above')
+                G['eh'].send_message('nf_goingdown')
+                G['eh'].send_message('b_nf_below')
+                
+                old_xpos = vertices[-2][0]
+                old_ypos = vertices[-2][1]
+
+                xend = old_xpos + (xpos-old_xpos) * (old_ypos - thr) / (old_ypos - ypos)
+                yend = thr
+                
+                patch_vert.pop()
+                patch_vert.append((xend, yend))
+                
+                thispatch = patches[-1]
+                thispatch.setVertices(patch_vert)
+
+            
+        ABOVE_PREV=ABOVE
+        
+        
+        
+        # check if there is something in hit - if there is, pop it + play sound (if sounds are to be played), 
+        # make patch visible (it's green already), increase counter.
+        # popping it will empty the list...
+        while hit:
+            
+            hitlevel = hit.pop(0)
+            
+
+            # send an event to tell the EEG that we've got an EEG success/hit:
+            G['eh'].send_message('nf_hit')
+        
+
+            # depending on whether it is anywhere from 0 to 10 -- figure out which chime sound to play.
+            # say hitlevel is a number between 0 and 10. 10 being REALLY good -- 0 being barely passable.
+            # this function looksup the correct chime index for that...
+            chime_index = f_get_chime_index(hitlevel)
+            
+            # play the sound
+            if CP['playNFSounds']:
+                st['chimes'][chime_index].play()
+        
+            # patches start INVISIBLE -- when there's an event, make then VISIBLE -- here.
+            # whatever the last patch was -- set the visibility to 1. This SHOULD -- work.
+            patches[-1].setOpacity(1.0)
+            
+            
+            # increase the counter, too.
+            st['counter'].setText(str(int(st['counter'].text)+1))
+        
+            
+        
+        
+        yield From(asyncio.sleep(G['EX_PR_SLEEPTIME']))
+
+
+
+
+    # markers, III
+    if ypos > thrContainer[0]:
+        G['eh'].send_message('e_nf_above')
+    else:
+        G['eh'].send_message('e_nf_below')
+        
+    # is_won = check_win_condition(CP, tlist, ylist, thrlist)
+    
+    # this_staircase.addResponse(1-is_won)
+    # this_staircase.otherData['list_up_till_now'][-1].append(is_won)
+    # tot_points = calculate_total_points(G, st, CP)
+    
+    #print(CP['corr_incorr'])
+    #print(CP['corr_incorr'][0])
+    #print(st['st_incorrect'])
+    #if is_won == 1:
+    #    CP['corr_incorr'][0] = st['st_correct']
+    #    CP['corr_incorr'][0].setPos=(0., -0.1)
+    #    print('should draw the st_correct now!!!')
+    #else:
+    #    CP['corr_incorr'][0] = st['st_incorrect']
+    #    CP['corr_incorr'][0].setPos=(0., -0.1)
+    # 
+    
+    # if G['EX_INTERACTIONMODE'] == 'master':
+    #     pass  # call staircase calculator now, that will make things ready for the next (feedback) step.
+
+
+
+        
+
+
+
+# @asyncio.coroutine
+# def HandleNFLine(G, st, CP):
+
+
+
+
+# we actually don't need this...
+#@asyncio.coroutine
+#def HandleCounter(G, st, CP):
+#    
+#    '''
+#    Increase the counter by +1 each time
+#    
+#    
+#    '''
 
 
 
 
 
 @asyncio.coroutine
-def HandleEMG(G, st, CP):
+def HandleEMGLine(G, st, CP):
     '''
-     a) depending on the NF signal -- change the thermo
+     a) depending on the NF signal -- change the thermo (done))
      b) check for any triggers -- do the following:
-            1) change color of the thermo to RED instead of GREEN
-            2) Play Sound according to intensity
-            3) Provide the necessary triggers
+            1) change color of the thermo to RED instead of GREEN (done))
+            2) Play Sound according to intensity (done))
+            3) Provide the necessary triggers (..done?))
     '''
     
+    # we need these:
+    emgThrContainer=CP['emgThrContainer']
+    emgContainer=CP['emgContainer']
+    hitError = CP['hitError']
     
-    pass
+    CURRENTPART=CP['CURRENTPART'][0]
+    CURRENTTIME=CP['CURRENTTIME'][0]
+    
+    color_min, color_max = G['EX_EMG_THERMOCLIMS']
+    colorgap = G['EX_COLORGAP']
 
-
-
-
-
+    SCALING = G['EX_SCALING']
 
     
+    
+    # obtain some information regarding where to put the theermometer:
+    twidth=G['EX_EMG_THERMOWIDTH']
+    theight=G['EX_EMG_THERMOHEIGHT']
+    tedge=G['EX_EMG_THERMOEDGE']
+    # tfactor=1.03
+    
+    # the EMG Feedback:    
+    # st['emg_feedback_window'] = visual.Rect(G['win'], width=twidth*tfactor, height=theight*tfactor, pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                fillColor=[-0.5,-0.5,-0.5],  lineColor=[1,1,1]) -- will remain coonstant
+    # st['emg_feedback']        = visual.Rect(G['win'], width=twidth,         height=theight,         pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                 fillColor=[0.5,-0.5,-0.5], lineColor=[-0.8,-0,-0.1], lineWidth=0)
+    
+    emg_ymin = -1+tedge
+    emg_ymax = -1+tedge+theight
+    emg_xmin = -1+tedge
+    emg_xmax = -1+tedge+twidth
+    
+    
+    # EMG_THR_FACTOR=emgThrContainer[0]
+    
+    # new_emg_vertices = (-1+tedge+0.5*twidth - twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), end=(-1+tedge+0.5*twidth+twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight),
+    
+    # st['emg_feedback_thresh'] = visual.Line(G['win'], start=(-1+tedge+0.5*twidth - twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), end=(-1+tedge+0.5*twidth+twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), lineWidth=G['EX_THRLINEWIDTH'])
+    
+    
+    
+    # figure out how to work these codes:
+    # 'b_emg_below': 211,
+    # 'e_emg_below': 219,
+    
+    # 'b_emg_above': 221,
+    # 'e_emg_above': 229,
+    
+    # 'emg_goingup': 220,
+    # 'emg_goingdown': 210,
+    
+    # 'emg_hit': 230
+    
+    emg_level = emgContainer[0]  # which should be a number between -1 and +1
+    emg_thr = emgThrContainer[0]  # which also is a number between -1 and +1
+    
+    
+    # markers, I:    
+    if emg_level > emg_thr:
+        ABOVE_PREV = True
+        # G['eh'].send_message('b_emg_above')
+    else:
+        ABOVE_PREV = False
+        # G['eh'].send_message('b_emg_below')
+    
+
+    
+    
+    
+    # but we also need the evs, right?
+
+    curtime=0
+    cl=clock.Clock()  # yeah...well, we make a second clock. should not be too off in seconds.
+    tmax = CURRENTTIME
+    
+    
+    # this will make it run for the specified time amount...
+    while curtime < tmax:
+        
+        # time.sleep(G['EX_PR_SLEEPTIME'])
+        
+        curtime=cl.getTime()
+        
+        
+        emg_level = emgContainer[0]  # which should be a number between -1 and +1
+        emg_thr = emgThrContainer[0]  # which also is a number between -1 and +1
+        
+        # ipdb.set_trace()
+        
+        # markers, II        
+        if emg_level > emg_thr:
+            ABOVE=True
+            if ABOVE_PREV==True:
+                pass
+            else:
+                G['eh'].send_message('e_emg_below')
+                G['eh'].send_message('emg_goingup')
+                G['eh'].send_message('b_emg_above')
+                
+        else:
+            ABOVE=False
+            if ABOVE_PREV==True:
+                G['eh'].send_message('e_emg_above')
+                G['eh'].send_message('emg_goingdown')
+                G['eh'].send_message('b_emg_below')
+            else:
+                pass
+
+
+
+
+        # set the emg thr to what was set (emg_level) -- use code from thermo for this + colors changeing too...
+        # I can just set the vertices of this one, too -- using normalkized units...
+        # ipdb.set_trace()
+        emgthrvert = [(emg_xmin, emg_ymin+emg_thr*theight), (emg_xmax, emg_ymin+emg_thr*theight) ]
+        
+        # damn - cannot use setVertices, but it does HAVE vertices.
+        # ipdb.set_trace()
+        # figure out how to use setstart and setend...
+        st['emg_feedback_thresh'].setStart(emgthrvert[0])
+        st['emg_feedback_thresh'].setEnd(emgthrvert[1])
+        
+
+        # calculate what is the factor for EMG?        
+        FACTOR=tuning(CP, emg_level)
+
+        
+        # set the signal of the emg to what was set (emg_thr) -- use code from thermo for this?    
+        # ipdb.set_trace()
+        # a terrible formula to calculate the position - the pos is in the MIDDLE of the square.
+        thermopos = [SCALING[0] * (emg_xmin/2+emg_xmax/2), SCALING[1] * (emg_ymin/2 + (emg_ymin+(emg_ymax-emg_ymin)*emg_level)/2)]
+        thermoheight = [(emg_ymax-emg_ymin)*emg_level]
+        
+        # thermovert = [(emg_xmin, emg_ymin), (emg_xmax, emg_ymin), (emg_xmax, emg_ymin+FACTOR*theight), (emg_xmin, emg_ymin+FACTOR*theight)]
+        st['emg_feedback'].setPos(thermopos)
+        st['emg_feedback'].setHeight(thermoheight)
+        
+        # calculate color according to FACTOR * THR        
+        (rnew, gnew, bnew) = my_color_calculator(color_min, color_max, emgThrContainer[0], colorgap, FACTOR, 1, 0)
+        st['emg_feedback'] .setFillColor((rnew, gnew, bnew), colorSpace='rgb')
+
+        
+        # check if there is something in hitError - if there is, pop it + play sound...
+        while hitError:
+            
+            # play error sound
+            hitError.pop(0)
+            st['sound-emg'].play()
+            G['eh'].send_message('emg_hit')
+            
+        
+        ABOVE_PREV=ABOVE  # update this...
+        yield From(asyncio.sleep(G['EX_PR_SLEEPTIME']))
+        # remember to add in events... what are my events??
+
+
+    # markers, III
+    if emgContainer[0] > emgThrContainer[0]:
+        pass
+        #G['eh'].send_message('e_nf_above')
+    else:
+        pass
+        #G['eh'].send_message('e_nf_below')    
 
 
 
@@ -1053,15 +1538,22 @@ def GenTestSignalEMG(G, st, CP):
     from math import sin, pi
         
     
+    cl=clock.Clock()
     while G['GenTestSignalRunning'] is True:
 
-        cl=clock.Clock()
         
-        signal = random.random()/2 + 0.25
+        # signal = random.random()/2 + 0.25
+        # signal = 1.0
         
-        signal_amp= sin(cl.getTime() / float(period)/0.5 * 2. * pi)
+        signal = (1-(sin(cl.getTime() / float(period) * 2. * pi)))/2
+        
+        # signal_amp= sin(cl.getTime() / float(period)/0.5 * 2. * 3.1415)
+        signal_amp = 1
     
         lst[0]=signal*signal_amp
+        
+        # print('%f\t%f\n' % (signal, signal_amp));
+        # print(lst[0])
         
         yield From(asyncio.sleep(G['EX_TESTSIGNALUPDATEINTERVAL']))
     
@@ -1746,6 +2238,9 @@ def init_programs(G, st, CP):
     pr['GenTestSignalEMG']=GenTestSignalEMG
 
     pr['pickRandomJitter']=pickRandomJitter
+    
+    pr['HandleNFLine'] = HandleNFLine
+    pr['HandleEMGLine'] = HandleEMGLine
 
     
     return pr
@@ -1864,6 +2359,12 @@ def handle_exception(f, trialType, G, st, CP, ex, loop):
     
 @asyncio.coroutine
 def runTrial(trialType, G, st, CP, ex, loop):
+    
+    ''' This is the Main Engine of our program! -- it'll go through ex, draw
+    what is required, start what is required, then move on to the next part
+    of ex. THis allows for some flexibility in regards to what we're making.
+    Things start up concurrently by using the asyncio-like routines.
+    '''
 
     print('---->' + trialType)
     # print(trialType)
@@ -1882,8 +2383,11 @@ def runTrial(trialType, G, st, CP, ex, loop):
         
         CP['TrialType'][0] = trialType
 
-        CP['CURRENTPART'][0] = part
+        
         programs, tdur, stims, messages_start, messages_stop = ex[trialType][part]
+        
+        CP['CURRENTPART'][0] = part
+        CP['CURRENTTIME'][0] = tdur
         
         #        if trialType == 'train' and part == 'mark':
         #            print(stims)
@@ -2035,7 +2539,7 @@ if __name__ == "__main__":
     class dummy_logger():
         def send_message(self, m):
             pass
-            # print(m)
+            print(m)
     
     G['eh']=dummy_logger()
     
