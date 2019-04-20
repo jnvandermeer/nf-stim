@@ -66,6 +66,7 @@ def init_eventcodes(G):
             'nf_goingdown':150,
             
             'nf_hit': 170,
+            'nf_hit_audio':171,
 
             
             

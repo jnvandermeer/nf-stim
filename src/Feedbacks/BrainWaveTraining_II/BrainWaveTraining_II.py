@@ -4,7 +4,7 @@
 # visual, sound, core, data, event and logging are the crucial ones.
 
 import random
-import pickle
+# import pickle
 from psychopy import clock, event, data, logging
 
 from FeedbackBase.MostBasicPsychopyFeedback import MostBasicPsychopyFeedback
@@ -32,7 +32,8 @@ from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import init_staircase
 
 from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import runTrial
 from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import flatten
-
+from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import starting_text
+from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import finish_text
 
 
 
@@ -140,7 +141,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.MONITOR_DISTANCE=70.  # distance to screen
         self.MONITOR_GAMMA=1.
         self.MONITOR_FPS=60.
-        self.MONITOR_USEDEGS=True
+        self.MONITOR_USEDEGS=False
         self.MONITOR_DEGS_WIDTHBASE=12
         self.MONITOR_DEGS_HEIGHTBASE=10
         self.MONITOR_FLIPHORIZONTAL = False
@@ -193,8 +194,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         CP['WIN_PARAMS'] = self.EX_WIN_PARAMS
         CP['EX_TXT_COUNTER'] = self.EX_TXT_COUNTER
 
-        CP['hitError'] = []
-        CP['hit'] = []
+        CP['hitError'] = [[]]
+        CP['hit'] = [[]]
         CP['emgThrContainer'] = [0.2]
         CP['emgContainer'] = [0.1]
         CP['playNFSounds'] = False
@@ -378,9 +379,9 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         # event handler...
         G=init_eventcodes(G)  # and this??
-        G=start_eh(G)
+        G=start_eh(G, dummy=True)
 
-        init_staircases_quest(G)
+        # init_staircases_quest(G, CP)
         st=make_stimuli(G, CP)
         pr=init_programs(G, st, CP)
 
@@ -441,27 +442,33 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         G['cl']=clock.Clock()   # init the trial-by-trial clock here and put into G...
         
-        
+        starting_text(G)
         
 
     # this is called AFTER main loop...
     def post_mainloop(self):
         MostBasicPsychopyFeedback.post_mainloop(self)
         
+        
+        # tell that we are ready -- use function imported from StopVigilanceTask
+        
+        
         self.G['eh'].shutdown()
         self.G['eh'].join()
+        
+        finish_text(G)
         self.G['logging'].flush()
         self.G['win'].close()
 
 
-        # save the staircases:
-        staircases = self.G['staircases']
-        staircase_file_name_to_save = self.G['file_to_check']
+        # save the staircases: (uncomment later if we wanted to use that...)
+        # staircases = self.G['staircases']
+        # staircase_file_name_to_save = self.G['file_to_check']
         
-        print('saving staircases in: %s' % staircase_file_name_to_save)
-        with open(staircase_file_name_to_save,'wb') as f:
-            pickle.dump(staircases, f)
-        print('saving done');
+        # print('saving staircases in: %s' % staircase_file_name_to_save)
+        # with open(staircase_file_name_to_save,'wb') as f:
+            # pickle.dump(staircases, f)
+        # print('saving done');
 
     # this always gets called, even paused.. -- UNTIL self.on_stop() is called. this will exit the main loop.
     # a 'tick' == ONE passage through the main loop (which is a 'while True' loop, basically...)
@@ -531,28 +538,43 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
     
     # this function WILL get called whenever I send over a 'control' event -- which is..
     # f.e. the NF data (whatever variable it is!)
-    def on_control_event(self, data):
+    def on_control_event(self, sent_data):
         #self.logger.debug("on_control_event: %s" % str(data))
         #self.NFPos = data["data"]
         # but we can change properties of the data --> so can draw stff!
         
-        for key in data.keys():
+        
+        # print(data)
+        
+        # import ipdb; ipdb.set_trace()
+        
+        for key in sent_data.keys():
+            
             
             
             if key in ['hit', 'hitError']:
-                self.CP[key].append(data[key])
+                self.CP[key][0].append(sent_data[key])
+                if key == 'hit':
+                    itema, itemb = sent_data[key]
+                    if itema == False:
+                        pass
+                 #   if itema == False:
+                 #       pass
+            elif key in ['nfsignalContainer','thrContainer','emgContainer','emgThrContainer']:
+                self.CP[key][0] = sent_data[key] # assign stuff!
             else:
-                self.CP[key] = data[key] # assign stuff!
+                self.CP[key] = sent_data[key]
                 
             if key == 'nfsignalContainer':
-                self.G['eh'].send_message('recv_nfsignal')
+                pass # otherwise the log will just spill over, right?
+                # self.G['eh'].send_message('recv_nfsignal')
             elif key == 'thrContainer':
-                self.G['eh'].send_message('recv_thr')
-            elif key == 'corr_incorr:':
-                self.G['eh'].send_message('recv_corr_incorr')
+                if hasattr(self, 'G'):
+                    if hasattr(self.G, 'eh'):
+                        self.G['eh'].send_message('recv_thr')
+  
 
-    
-        
+      
         
         #CP['nfsignalContainer'] = [0]
         #CP['thrContainer'] = [0.5]
