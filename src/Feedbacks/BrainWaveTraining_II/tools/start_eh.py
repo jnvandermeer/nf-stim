@@ -19,8 +19,14 @@ from Feedbacks.BrainWaveTraining.tools.create_incremental_filename import create
 
 # from Feedbacks.BrainWaveTraining.tools.eventhandler import eventhandler
 
+# define our dummy logger:    
+class dummy_logger():
+    def send_message(self, m):
+        pass
+        print(m)
 
-def start_eh(G):
+
+def start_eh(G, dummy=False):
     
     
     EVENT_destip=G['v']['EVENT_destip']
@@ -40,35 +46,42 @@ def start_eh(G):
     print(MSGDICT)
     print('EVENT_sendParallel is: ' + str(EVENT_sendParallel))
     print('----')
-    
-    eh=eventHandler(
-        mainClock, 
-        messagedict=MSGDICT,
-        destip=EVENT_destip,
-        destport=EVENT_destport,
-        LPTAddress=EVENT_LPTAddress,
-        LPTTriggerWaiting=EVENT_LPTTrigWaitTime,
-        filename=LOG_PATHFILE_EVENT,
-        sendParallel=EVENT_sendParallel, 
-        sendTcpIp=EVENT_sendTcpIp, 
-        sendLogFile=EVENT_sendLogFile,
-        printToTerminal=EVENT_printToTerminal,
-        printToTerminalAllowed=EVENT_printToTerminalAllowed  # only allow the stops, which are < 40.
-        )
 
+    if dummy is not False:    
+        eh=eventHandler(
+            mainClock, 
+            messagedict=MSGDICT,
+            destip=EVENT_destip,
+            destport=EVENT_destport,
+            LPTAddress=EVENT_LPTAddress,
+            LPTTriggerWaiting=EVENT_LPTTrigWaitTime,
+            filename=LOG_PATHFILE_EVENT,
+            sendParallel=EVENT_sendParallel, 
+            sendTcpIp=EVENT_sendTcpIp, 
+            sendLogFile=EVENT_sendLogFile,
+            printToTerminal=EVENT_printToTerminal,
+            printToTerminalAllowed=EVENT_printToTerminalAllowed  # only allow the stops, which are < 40.
+            )
     
-
-    print('----><----')
-    print(eh)
-    eh.start()
-    # time.sleep(10)
-    #print('<---><----')
-    # eh.send_message('aud_l55')
-    print('<---><----')
-    print(eh)
+        
     
-    # return eh
-    G['eh']=eh
+        print('----><----')
+        print(eh)
+        eh.start()
+        # time.sleep(10)
+        #print('<---><----')
+        # eh.send_message('aud_l55')
+        print('<---><----')
+        print(eh)
+        
+        # return eh
+        G['eh']=eh
+        
+    else:
+        
+        eh=dummy_logger()
+        
+        
     return(G)
     
     
