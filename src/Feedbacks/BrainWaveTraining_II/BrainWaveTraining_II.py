@@ -394,25 +394,35 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         # take care of the randomization(s)...
         trialopts=[]
+#        
+#        trialopts.append([1,1,2,1,3,4])
+#        trialopts.append([1,1,2,1,4,3])
+#        trialopts.append([1,1,2,3,1,4])
+#        trialopts.append([1,1,2,4,1,3])
+#        trialopts.append([1,1,3,1,2,4])
+#        trialopts.append([1,1,3,1,4,2])
+#        trialopts.append([1,1,3,2,1,4])
+#        trialopts.append([1,1,3,4,1,2])
+#        trialopts.append([1,1,4,1,3,2])
+#        trialopts.append([1,1,4,1,2,3])
+#        trialopts.append([1,1,4,3,1,2])
+#        trialopts.append([1,1,4,2,1,3])
+#        trialopts.append([1,2,1,4,1,3])
+#        trialopts.append([1,2,1,3,1,4])
+#        trialopts.append([1,3,1,4,1,2])
+#        trialopts.append([1,3,1,2,1,4])
+#        trialopts.append([1,4,1,2,1,3])
+#        trialopts.append([1,4,1,3,1,2])
         
-        trialopts.append([1,1,2,1,3,4])
-        trialopts.append([1,1,2,1,4,3])
-        trialopts.append([1,1,2,3,1,4])
-        trialopts.append([1,1,2,4,1,3])
-        trialopts.append([1,1,3,1,2,4])
-        trialopts.append([1,1,3,1,4,2])
-        trialopts.append([1,1,3,2,1,4])
-        trialopts.append([1,1,3,4,1,2])
-        trialopts.append([1,1,4,1,3,2])
-        trialopts.append([1,1,4,1,2,3])
-        trialopts.append([1,1,4,3,1,2])
-        trialopts.append([1,1,4,2,1,3])
-        trialopts.append([1,2,1,4,1,3])
-        trialopts.append([1,2,1,3,1,4])
-        trialopts.append([1,3,1,4,1,2])
-        trialopts.append([1,3,1,2,1,4])
-        trialopts.append([1,4,1,2,1,3])
-        trialopts.append([1,4,1,3,1,2])
+        trialopts.append([1,1,2,1,4])
+        trialopts.append([1,1,2,4,1])
+        trialopts.append([1,1,4,1,2])
+        trialopts.append([1,1,4,2,1])
+        trialopts.append([1,2,1,4,1])
+        trialopts.append([1,2,1,1,4])
+        trialopts.append([1,4,1,2,1])
+        trialopts.append([1,4,1,1,2])
+        
         
         random.shuffle(trialopts)
         random.shuffle(trialopts)
@@ -442,13 +452,13 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         G['cl']=clock.Clock()   # init the trial-by-trial clock here and put into G...
         
-        starting_text(G)
+        starting_text(G, 'Press to Begin...')
+        starting_text(G, 'Ready...')
         
 
     # this is called AFTER main loop...
     def post_mainloop(self):
         MostBasicPsychopyFeedback.post_mainloop(self)
-        
         
         # tell that we are ready -- use function imported from StopVigilanceTask
         

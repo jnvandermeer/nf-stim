@@ -63,12 +63,12 @@ def flatten_helper(lst, new_lst):
 
 
 # for the start of the experiment, do this:
-def starting_text(G):
+def starting_text(G, text):
     event.clearEvents()
     win=G['win']
     # eh=G['eh']
     
-    testinstr=visual.TextStim(win, 'Press to begin...',pos=(0, 0), units='norm')
+    testinstr=visual.TextStim(win, text,pos=(0, 0), units='norm')
     incor_clock=clock.Clock()
     correctlyPressed=False
     drawIncorrect=False
@@ -93,6 +93,8 @@ def starting_text(G):
                 incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
                 drawIncorrect=True
                 incor_clock.reset()
+                
+                
                 
                 
 def finish_text(G):
@@ -579,8 +581,12 @@ def make_stimuli(G, CP):
     # a crosshair - not an arrow or anything like that
     st['crosshair'] = visual.TextStim(win, text='+', units='norm', pos=(0, 0))
     
+    
+    st['instr_upregulate'] = visual.TextStim(win, text='upregulate', units='norm', pos=(0.95, 0.9), alignHoriz='right')
+    st['instr_rest'] = visual.TextStim(win, text='rest', units='norm', pos=(0.9, 0.9), alignHoriz='right')
+    
     # scale them, too...
-    items=[st['emg_feedback'], st['emg_feedback_window'], st['counter'], st['crosshair'], st['emg_feedback_thresh']] #, thermo_thermometer_silent]
+    items=[st['emg_feedback'], st['emg_feedback_window'], st['counter'], st['crosshair'], st['emg_feedback_thresh'], st['instr_upregulate'], st['instr_rest']] #, thermo_thermometer_silent]
     # scale it:
     for i in items:
         oldpos = i.pos        
@@ -598,7 +604,8 @@ def make_stimuli(G, CP):
     #                                             ) 
     #                                             for x in range(24,40)
     #                                             ]
-        
+
+
         
         
     print('..........')
@@ -961,8 +968,8 @@ def define_experiment(G, st, pr, CP):
     # for each trial type, show what's going the be on the screen...
     ex['line']['train']['sequence']             = ['instruction', 'pause', 'feedback', 'veryshortpause1', 'jitterpause' ]
     ex['line']['train']['instruction']          = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                             ['instruction','itrain'], [])
-    ex['line']['train']['pause']                = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['train']['feedback']             = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','btrain'], ['eFB','etrain'])
+    ex['line']['train']['pause']                = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                                            [], [])
+    ex['line']['train']['feedback']             = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB+4.0,     [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],    ['bFB','btrain'], ['eFB','etrain'])
     ex['line']['train']['veryshortpause1']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
     ex['line']['train']['veryshortpause2']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
     ex['line']['train']['mark']                 = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV','xorvtrain'], [])
@@ -971,8 +978,8 @@ def define_experiment(G, st, pr, CP):
     
     ex['line']['transfer']['sequence']          = ['instruction', 'pause', 'feedback', 'veryshortpause', 'jitterpause' ]
     ex['line']['transfer']['instruction']       = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                   ['instruction','itransfer'], [])
-    ex['line']['transfer']['pause']             = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['transfer']['feedback']          = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
+    ex['line']['transfer']['pause']             = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                                            [], [])
+    ex['line']['transfer']['feedback']          = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
     ex['line']['transfer']['veryshortpause']    = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                                            [], [])
     ex['line']['transfer']['mark']              = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV', 'xorvtransfer'], [])
     ex['line']['transfer']['jitterpause']       = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisitransfer'], ['eISI','eisitransfer'])
@@ -988,8 +995,8 @@ def define_experiment(G, st, pr, CP):
     
     ex['line']['rest']['sequence']              = ['instruction', 'pause', 'feedback', 'jitterpause' ]
     ex['line']['rest']['instruction']           = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                   ['instruction','irest'], [])
-    ex['line']['rest']['pause']                 = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['rest']['feedback']              = ([pr['HandleEMGLine']],                                  TFB,         [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
+    ex['line']['rest']['pause']                 = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_rest']],                                                            [], [])
+    ex['line']['rest']['feedback']              = ([pr['HandleEMGLine']],                                  TFB,         [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_rest']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
     ex['line']['rest']['jitterpause']           = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisirest'],['eISI','eisirest'])
 
 
@@ -1179,7 +1186,7 @@ def HandleNFLine(G, st, CP):
     # initialize the ypos:    
     if ypos_for_color > thrContainer[0]:
         # make a new patch..
-        G['eh'].send_message('b_nf_above')
+        # G['eh'].send_message('b_nf_above')
         rnew, gnew, bnew = my_color_calculator(hb, he, thr, colorgap, ypos_for_color, 1, -1)   
         patch_color = (rnew, gnew, bnew)
         
@@ -1192,7 +1199,7 @@ def HandleNFLine(G, st, CP):
         newpatch = visual.ShapeStim(win, vertices=patch_vert, fillColor=patch_color, size=scaling, lineWidth=0, opacity=0)
         patches.append(newpatch)
     else:
-        G['eh'].send_message('b_nf_below')
+        # G['eh'].send_message('b_nf_below')
         ABOVE_PREV = False
     
     
@@ -1325,19 +1332,23 @@ def HandleNFLine(G, st, CP):
         # check if there is something in hit - if there is, pop it + play sound (if sounds are to be played), 
         # make patch visible (it's green already), increase counter.
         # popping it will empty the list...
-        while hit:
-            
-            # figure out first = True = Counter; False = no Counter
-            # then figure out what intensity:: it's always with False ++ which level it was...
-            hitCounter, hitSoundlevel = hit.pop(0)
-            # we also check our EMG, so we don't give reward while the EMG is not good:
+        
+        if len(hit)>0:
             emg_level = CP['emgThrContainer']
             emg_thr = CP['emgContainer']
-
             
-            if emg_level < emg_thr:  # this can be made a bit more refined, but for now it should do...
-
-            
+            # DO_FEEDBACK = emg_level < emg_thr
+        
+            while hit:
+                
+                # figure out first = True = Counter; False = no Counter
+                # then figure out what intensity:: it's always with False ++ which level it was...
+                hitCounter, hitSoundlevel = hit.pop(0)
+                # we also check our EMG, so we don't give reward while the EMG is not good:
+                
+                # if DO_FEEDBACK:  # this can be made a bit more refined, but for now it should do...
+    
+                
                 if hitCounter:  
                 
                     G['eh'].send_message('nf_hit') # always send a 'hit' msg telling us that something's been given...
@@ -1383,6 +1394,10 @@ def HandleNFLine(G, st, CP):
                             print('---XXX--- chime_index  = %d ---XXX---' % chime_index)
                             st['chimes'][chime_index].play()
                             G['eh'].send_message('nf_hit_audio')
+                            if len(patches)>0:
+                                if patches[-1].opacity == 0:
+                                    patches[-1].setOpacity(1.0)
+                            
                             
                     elif trialType == 'rest':
                         pass
@@ -1507,17 +1522,12 @@ def HandleEMGLine(G, st, CP):
     
     # 'emg_hit': 230
     
-    emg_level = emgContainer[0]  # which should be a number between -1 and +1
-    emg_thr = emgThrContainer[0]  # which also is a number between -1 and +1
+    # emg_level =   # which should be a number between -1 and +1
+    # emg_thr =   # which also is a number between -1 and +1
     
     
     # markers, I:    
-    if emg_level > emg_thr:
-        EMG_ABOVE_PREV = True
-        # G['eh'].send_message('b_emg_above')
-    else:
-        EMG_ABOVE_PREV = False
-        # G['eh'].send_message('b_emg_below')
+    EMG_ABOVE_PREV = emgContainer[0] > emgThrContainer[0]
     
     
     CP['hitError'][0]=[]
@@ -1540,36 +1550,27 @@ def HandleEMGLine(G, st, CP):
         curtime=cl.getTime()
         
         
-        emg_level = emgContainer[0]  # which should be a number between -1 and +1
-        emg_thr = emgThrContainer[0]  # which also is a number between -1 and +1
-        
-        # ipdb.set_trace()
         
         # markers, II        
-        if emg_level > emg_thr:
-            if EMG_ABOVE_PREV==True:
-                pass
-            else:
-                # G['eh'].send_message('e_emg_below')
-                G['eh'].send_message('emg_goingup')
-                print('<< JUST SENT EMG_GOINGUP; emg_level = %.4f, emg_thr = %.4f, running_counter = %d' % (emg_level, emg_thr, running_counter))
-                print('EMG_ABOVE = %d, EMG_ABOVE_PREV = %d' % (emg_level > emg_thr, EMG_ABOVE_PREV))
-                EMG_ABOVE_PREV = False
-                # G['eh'].send_message('b_emg_above')
-                
-        else:
-            if EMG_ABOVE_PREV==False:
-                # G['eh'].send_message('e_emg_above')
-                G['eh'].send_message('emg_goingdown')
-                print('<< JUST SENT EMG_GOINGDOWN')
-                EMG_ABOVE_PREV = True
-                # G['eh'].send_message('b_emg_below')
-            else:
-                pass
+        EMG_ABOVE = emgContainer[0] >= emgThrContainer[0]
+        
+        if EMG_ABOVE and EMG_ABOVE_PREV:
+            pass
+        elif EMG_ABOVE and not EMG_ABOVE_PREV:
+            # G['eh'].send_message('emg_goingup')
+            pass
+        elif not EMG_ABOVE and EMG_ABOVE_PREV:
+            # G['eh'].send_message('emg_goingdown')
+            pass
+        elif not EMG_ABOVE and not EMG_ABOVE_PREV:
+            pass
+        
+        EMG_ABOVE_PREV = EMG_ABOVE
+        
+        
 
-        # EMG_ABOVE_PREV=EMG_ABOVE  # update this...
-
-
+        emg_level = emgContainer[0]  # which should be a number between -1 and +1
+        emg_thr =  emgThrContainer[0] # which also is a number between -1 and +1
         # set the emg thr to what was set (emg_level) -- use code from thermo for this + colors changeing too...
         # I can just set the vertices of this one, too -- using normalkized units...
         # ipdb.set_trace()
@@ -2625,31 +2626,42 @@ def run_main_program(G, st, CP, ex, pr):
     #            ]
     trialopts=[]
 
-    trialopts.append([1,1,2,1,3,4])
-    trialopts.append([1,1,2,1,4,3])
-    trialopts.append([1,1,2,3,1,4])
-    trialopts.append([1,1,2,4,1,3])
-    trialopts.append([1,1,3,1,2,4])
-    trialopts.append([1,1,3,1,4,2])
-    trialopts.append([1,1,3,2,1,4])
-    trialopts.append([1,1,3,4,1,2])
-    trialopts.append([1,1,4,1,3,2])
-    trialopts.append([1,1,4,1,2,3])
-    trialopts.append([1,1,4,3,1,2])
-    trialopts.append([1,1,4,2,1,3])
-    trialopts.append([1,2,1,4,1,3])
-    trialopts.append([1,2,1,3,1,4])
-    trialopts.append([1,3,1,4,1,2])
-    trialopts.append([1,3,1,2,1,4])
-    trialopts.append([1,4,1,2,1,3])
-    trialopts.append([1,4,1,3,1,2])
+#    trialopts.append([1,1,2,1,3,4])
+#    trialopts.append([1,1,2,1,4,3])
+#    trialopts.append([1,1,2,3,1,4])
+#    trialopts.append([1,1,2,4,1,3])
+#    trialopts.append([1,1,3,1,2,4])
+#    trialopts.append([1,1,3,1,4,2])
+#    trialopts.append([1,1,3,2,1,4])
+#    trialopts.append([1,1,3,4,1,2])
+#    trialopts.append([1,1,4,1,3,2])
+#    trialopts.append([1,1,4,1,2,3])
+#    trialopts.append([1,1,4,3,1,2])
+#    trialopts.append([1,1,4,2,1,3])
+#    trialopts.append([1,2,1,4,1,3])
+#    trialopts.append([1,2,1,3,1,4])
+#    trialopts.append([1,3,1,4,1,2])
+#    trialopts.append([1,3,1,2,1,4])
+#    trialopts.append([1,4,1,2,1,3])
+#    trialopts.append([1,4,1,3,1,2])
+    
+    trialopts.append([1,1,2,1,4])
+    trialopts.append([1,1,2,4,1])
+    trialopts.append([1,1,4,1,2])
+    trialopts.append([1,1,4,2,1])
+    trialopts.append([1,2,1,4,1])
+    trialopts.append([1,2,1,1,4])
+    trialopts.append([1,4,1,2,1])
+    trialopts.append([1,4,1,1,2])
+
+    
     
     random.shuffle(trialopts)
     random.shuffle(trialopts)
     random.shuffle(trialopts)   # 3 time shuffle, for good luck :-)
                                 # computational anathema and heretic!
                                 
-    my_trial_sequence = flatten(trialopts[0:5])  # we do 5 of them.
+    my_trial_sequence = flatten(trialopts[0:4])  # we do only 5 of them.
     my_trial_definitions = {1:'train', 2:'transfer', 3:'observe', 4:'rest'}
     
     
