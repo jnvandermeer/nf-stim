@@ -19,11 +19,6 @@ from Feedbacks.BrainWaveTraining.tools.create_incremental_filename import create
 
 # from Feedbacks.BrainWaveTraining.tools.eventhandler import eventhandler
 
-# define our dummy logger:    
-class dummy_logger():
-    def send_message(self, m):
-        pass
-        print(m)
 
 
 def start_eh(G, dummy=False):
@@ -75,18 +70,26 @@ def start_eh(G, dummy=False):
         print(eh)
         
         # return eh
-        G['eh']=eh
+
         
     else:
         
         eh=dummy_logger()
+        print('<---><----')
+        print(eh)
         
-        
+
+    G['eh']=eh        
     return(G)
     
     
     
     
+# define our dummy logger:    
+class dummy_logger():
+    def send_message(self, m):
+        pass
+        print(m)
     
     
 

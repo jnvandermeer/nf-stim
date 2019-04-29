@@ -48,8 +48,8 @@ class RestingState(MostBasicPsychopyFeedback):
         self.STARTKEYS=['return','t','5']
         self.STARTMRIKEYS = ['return','t','5']
         self.EX_EV_IGNORE_KEYS=['5','t']
-        self.MONITOR_PIXWIDTH=1920
-        self.MONITOR_PIXHEIGHT=1200
+        self.MONITOR_PIXWIDTH=1280
+        self.MONITOR_PIXHEIGHT=1024
         self.MONITOR_WIDTH=40.  # width of screen
         self.MONITOR_HEIGHT=30.  # height of screen
         self.MONITOR_DISTANCE=70.  # distance to screen
