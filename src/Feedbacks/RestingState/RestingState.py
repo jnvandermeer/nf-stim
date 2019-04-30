@@ -81,7 +81,8 @@ class RestingState(MostBasicPsychopyFeedback):
         
         self.EVENT_destip='127.0.0.1'
         self.EVENT_destport=6050
-        self.EVENT_LPTAddress=0xD050
+        #self.EVENT_LPTAddress=0xD050
+        self.EVENT_LPTAddress=0x0378
         self.EVENT_LPTTrigWaitTime=0.005
         self.EVENT_TRIGLOG='log/triggerlog.log'
         self.EVENT_sendParallel=True
@@ -171,7 +172,6 @@ class RestingState(MostBasicPsychopyFeedback):
         
         # G=init_audio(G)
         # G=init_visual(G)
-        
         G=start_ev(G)
         
         # load in the settings file that is near THIS script!
@@ -251,7 +251,6 @@ class RestingState(MostBasicPsychopyFeedback):
             wait_for_key(G, 'Press to start Eyes Open...')
             wait_for_key(G, 'Press to start')
             eo_stim(G)
-    
             
             #measure_artifact_program(G)
             

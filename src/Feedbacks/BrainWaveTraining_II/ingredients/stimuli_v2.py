@@ -101,7 +101,8 @@ def finish_text(G):
     win=G['win']
     # eh=G['eh']
     
-    testinstr=visual.TextStim(win, 'Session ended! Your total score: ...',pos=(0, 0), units='norm')
+    total_score = int(st['counter'].text)
+    testinstr=visual.TextStim(win, 'Session ended! Your total score: %d' % total_score, pos=(0, 0), units='norm')
     incor_clock=clock.Clock()
     correctlyPressed=False
     drawIncorrect=False

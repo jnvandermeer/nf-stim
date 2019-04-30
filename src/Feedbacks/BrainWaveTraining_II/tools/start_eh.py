@@ -42,7 +42,7 @@ def start_eh(G, dummy=False):
     print('EVENT_sendParallel is: ' + str(EVENT_sendParallel))
     print('----')
 
-    if dummy is not False:    
+    if dummy is False:    
         eh=eventHandler(
             mainClock, 
             messagedict=MSGDICT,
@@ -218,7 +218,7 @@ class eventHandler(multiprocessing.Process):
         
         while not self._shutdown.is_set():
             
-            time.sleep(0.0005) # take it easy on the CPU
+            time.sleep(0.0005) # take it easy on the CPU?
             
             while not self._queue.empty():
                 
