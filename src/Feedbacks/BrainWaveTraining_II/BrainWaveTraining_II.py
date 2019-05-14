@@ -43,7 +43,7 @@ import trollius as asyncio
 from trollius import From
 from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import handle_exception_pr
 from Feedbacks.BrainWaveTraining_II.ingredients.stimuli_v2 import handle_exception
-
+import time
 
 # get the pause screen!
 from Feedbacks.EEGfMRILocalizer.efl.efl_v11 import wait_for_key
@@ -379,7 +379,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         # event handler...
         G=init_eventcodes(G)  # and this??
-        G=start_eh(G, dummy=True)
+        G=start_eh(G)
 
         # init_staircases_quest(G, CP)
         st=make_stimuli(G, CP)
@@ -466,7 +466,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.G['eh'].shutdown()
         self.G['eh'].join()
         
-        finish_text(G)
+        finish_text(self.G)
         self.G['logging'].flush()
         self.G['win'].close()
 
@@ -553,7 +553,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         #self.NFPos = data["data"]
         # but we can change properties of the data --> so can draw stff!
         
-        
+        # time.sleep(1)
         # print(data)
         
         # import ipdb; ipdb.set_trace()

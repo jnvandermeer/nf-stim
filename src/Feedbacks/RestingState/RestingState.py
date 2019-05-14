@@ -48,8 +48,8 @@ class RestingState(MostBasicPsychopyFeedback):
         self.STARTKEYS=['return','t','5']
         self.STARTMRIKEYS = ['return','t','5']
         self.EX_EV_IGNORE_KEYS=['5','t']
-        self.MONITOR_PIXWIDTH=1920
-        self.MONITOR_PIXHEIGHT=1200
+        self.MONITOR_PIXWIDTH=1280
+        self.MONITOR_PIXHEIGHT=1024
         self.MONITOR_WIDTH=40.  # width of screen
         self.MONITOR_HEIGHT=30.  # height of screen
         self.MONITOR_DISTANCE=70.  # distance to screen
@@ -81,7 +81,8 @@ class RestingState(MostBasicPsychopyFeedback):
         
         self.EVENT_destip='127.0.0.1'
         self.EVENT_destport=6050
-        self.EVENT_LPTAddress=0xD050
+        #self.EVENT_LPTAddress=0xD050
+        self.EVENT_LPTAddress=0x0378
         self.EVENT_LPTTrigWaitTime=0.005
         self.EVENT_TRIGLOG='log/triggerlog.log'
         self.EVENT_sendParallel=True
@@ -171,7 +172,6 @@ class RestingState(MostBasicPsychopyFeedback):
         
         # G=init_audio(G)
         # G=init_visual(G)
-        
         G=start_ev(G)
         
         # load in the settings file that is near THIS script!
@@ -251,7 +251,6 @@ class RestingState(MostBasicPsychopyFeedback):
             wait_for_key(G, 'Press to start Eyes Open...')
             wait_for_key(G, 'Press to start')
             eo_stim(G)
-    
             
             #measure_artifact_program(G)
             

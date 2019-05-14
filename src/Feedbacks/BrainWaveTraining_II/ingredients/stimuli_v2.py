@@ -33,7 +33,6 @@ import re
 import pickle
 import ipdb
 # import eventhandler
-
 print(__file__)
 
 
@@ -102,7 +101,8 @@ def finish_text(G):
     win=G['win']
     # eh=G['eh']
     
-    testinstr=visual.TextStim(win, 'Session ended! Your total score: ...',pos=(0, 0), units='norm')
+    total_score = int(st['counter'].text)
+    testinstr=visual.TextStim(win, 'Session ended! Your total score: %d' % total_score, pos=(0, 0), units='norm')
     incor_clock=clock.Clock()
     correctlyPressed=False
     drawIncorrect=False
@@ -189,7 +189,7 @@ def init_G_and_CP():  # so we do this ourselves in the pyff framework:
         v['EX_COLORGAP'] = 1  # the gap between colors when thr is passed. -- uses the colorcalculator
         
         
-        v['EX_PR_SLEEPTIME'] = 0.01 # 0.01  # how long do we 'sleep' in our main program threads? (screen update is ~0.0016 seconds)
+        v['EX_PR_SLEEPTIME'] = 0.001 # 0.01  # how long do we 'sleep' in our main program threads? (screen update is ~0.0016 seconds)
         
         v['EX_EMG_THERMOWIDTH'] = 0.2
         v['EX_EMG_THERMOHEIGHT'] = 0.05
@@ -220,8 +220,8 @@ def init_G_and_CP():  # so we do this ourselves in the pyff framework:
         
         
         
-        v['MONITOR_PIXWIDTH']=800
-        v['MONITOR_PIXHEIGHT']=600
+        v['MONITOR_PIXWIDTH']=1200
+        v['MONITOR_PIXHEIGHT']=1024
         v['MONITOR_WIDTH']=40.  # width of screen
         v['MONITOR_HEIGHT']=30.  # height of screen
         v['MONITOR_DISTANCE']=70.  # distance to screen
@@ -285,7 +285,7 @@ def init_G_and_CP():  # so we do this ourselves in the pyff framework:
 #%%  getting the window
 
 def init_window(G):
-    win=visual.Window(size=(800,600), fullscr=False, screen=0, allowGUI=True, winType='pyglet', waitBlanking=False)
+    win=visual.Window(size=(1200, 900), fullscr=False, screen=0, allowGUI=True, winType='pyglet', waitBlanking=False)
     G['win']=win
 
 
@@ -520,7 +520,7 @@ def make_stimuli(G, CP):
     
     
     # scale them, too...
-    items=[square, square_silent,square_focus] #, thermo_thermometer_silent]
+    items=[square, square_silent, square_focus] #, thermo_thermometer_silent]
     # scale it:
     for i in items:
         oldsize=i.size
@@ -1372,13 +1372,13 @@ def HandleNFLine(G, st, CP):
                         pass
                 
                 
-                print('---XXX--- chime_index  = %f ---XXX---' % hitSoundlevel)            # depending on whether it is anywhere from 0 to 10 -- figure out which chime sound to play.
+                # print('---XXX--- chime_index  = %f ---XXX---' % hitSoundlevel)            # depending on whether it is anywhere from 0 to 10 -- figure out which chime sound to play.
                 # say hitlevel is a number between 0 and 10. 10 being REALLY good -- 0 being barely passable.
                 # this function looksup the correct chime index for that...
                 if hitSoundlevel >= 0:    # auditory stuff
                     
                     chime_index = f_get_chime_index(hitSoundlevel)
-                    print('---X2X2X--- chime_index  = %f ---XXX---' % chime_index)            # depending on whether it is anywhere from 0 to 10 -- figure out which chime sound to play.
+                    # print('---X2X2X--- chime_index  = %f ---XXX---' % chime_index)            # depending on whether it is anywhere from 0 to 10 -- figure out which chime sound to play.
     
                     
                     if trialType == 'transfer':
@@ -1388,10 +1388,10 @@ def HandleNFLine(G, st, CP):
                         pass
                     
                     elif trialType == 'train':  # ONLY sound during the actual training trials..., see notes!
-                        print('---XXX--- chime_index  = %d ---XXX---' % chime_index)
+                        # print('---XXX--- chime_index  = %d ---XXX---' % chime_index)
     
                         if CP['playNFSounds']:
-                            print('---XXX--- chime_index  = %d ---XXX---' % chime_index)
+                            # print('---XXX--- chime_index  = %d ---XXX---' % chime_index)
                             st['chimes'][chime_index].play()
                             G['eh'].send_message('nf_hit_audio')
                             if len(patches)>0:
@@ -2561,13 +2561,14 @@ def runTrial(trialType, G, st, CP, ex, loop):
         # start the program or programs, if there are any, using ASYNC!!
         for pitem in programs:
             # yield From(asyncio.async(handle_exception_pr(pitem, G, st, CP, loop)))
+            # if pitem is not pr['HandleEMGLine']:
             loop.create_task(handle_exception_pr(pitem, G, st, CP, loop))
             yield From(asyncio.sleep(0))
     
         # print('debug: ' + part + 'start')    
         G['cl'].reset()
         while G['cl'].getTime() < tdur:
-            yield From(asyncio.sleep(0))
+            yield From(asyncio.sleep(G['EX_PR_SLEEPTIME']))
             for i, stim in enumerate(stims):
                 if isinstance(stim, list):  # specifically for the patches..
                     #print(stim)
@@ -2576,7 +2577,7 @@ def runTrial(trialType, G, st, CP, ex, loop):
                 else:
                     stim.draw()
             G['win'].flip()  # here we send the message !!
-            yield From(asyncio.sleep(0))
+            yield From(asyncio.sleep(G['EX_PR_SLEEPTIME']))
             
         # now that the window flipping is done -- send 'end' markers directoy.
         for message in messages_stop:

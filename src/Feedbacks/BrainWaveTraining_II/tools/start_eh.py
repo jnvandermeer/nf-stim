@@ -19,11 +19,6 @@ from Feedbacks.BrainWaveTraining.tools.create_incremental_filename import create
 
 # from Feedbacks.BrainWaveTraining.tools.eventhandler import eventhandler
 
-# define our dummy logger:    
-class dummy_logger():
-    def send_message(self, m):
-        pass
-        print(m)
 
 
 def start_eh(G, dummy=False):
@@ -47,7 +42,7 @@ def start_eh(G, dummy=False):
     print('EVENT_sendParallel is: ' + str(EVENT_sendParallel))
     print('----')
 
-    if dummy is not False:    
+    if dummy is False:    
         eh=eventHandler(
             mainClock, 
             messagedict=MSGDICT,
@@ -75,18 +70,26 @@ def start_eh(G, dummy=False):
         print(eh)
         
         # return eh
-        G['eh']=eh
+
         
     else:
         
         eh=dummy_logger()
+        print('<---><----')
+        print(eh)
         
-        
+
+    G['eh']=eh        
     return(G)
     
     
     
     
+# define our dummy logger:    
+class dummy_logger():
+    def send_message(self, m):
+        pass
+        print(m)
     
     
 
@@ -215,7 +218,7 @@ class eventHandler(multiprocessing.Process):
         
         while not self._shutdown.is_set():
             
-            time.sleep(0.0005) # take it easy on the CPU
+            time.sleep(0.0005) # take it easy on the CPU?
             
             while not self._queue.empty():
                 
