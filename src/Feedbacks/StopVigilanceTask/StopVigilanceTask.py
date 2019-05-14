@@ -19,7 +19,7 @@ from Feedbacks.StopVigilanceTask.efl import eventhandler
 from Feedbacks.StopVigilanceTask.efl import visualHelper
 
 # the actual experiment:
-from Feedbacks.StopVigilanceTask.efl.efl_v12 import * 
+from Feedbacks.StopVigilanceTask.efl.efl_v14 import * 
 
 
 
