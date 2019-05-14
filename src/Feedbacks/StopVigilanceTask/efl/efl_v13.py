@@ -106,7 +106,7 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['LOGFILEBASE']='efl'  # how to call our logfile --> it adds a number each time
         v['IPADDRESS']='localhost'  # port and ip to send codes towards to
         v['PORT']=6050  # which port is nice?  
-        v['BUTTONS'] = ['lctrl', 'rctrl']  # the button codes coming out of event.getStim()
+        v['BUTTONS'] = ['space', 'space']  # the button codes coming out of event.getStim()
         v['tooSoonTime']=0.0  # if it's pressed before this time --> discard + error
         v['LPT_TRIGGER_WAIT']=0.005  # how long are the LPT port pulses?
         v['RECORDFRAMEINTERVALS'] = True  # for debugging..
@@ -2168,7 +2168,7 @@ def test_buttons(G):
             if len(evs) > 0:
                 buttonsPressed, timesPressed = zip(*evs)
                 buttonPressed=buttonsPressed[0]
-                if buttonsPressed[0] == BUTTONS[i]:
+                if buttonsPressed[0] in BUTTONS:
                     correctlyPressed=True
                 else:
                     
