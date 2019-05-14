@@ -110,8 +110,8 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['tooSoonTime']=0.0  # if it's pressed before this time --> discard + error
         v['LPT_TRIGGER_WAIT']=0.005  # how long are the LPT port pulses?
         v['RECORDFRAMEINTERVALS'] = True  # for debugging..
-        v['DO_VISUAL'] = True
-        v['DO_AUDIO'] = True
+        v['DO_VISUAL'] = False
+        v['DO_AUDIO'] = False
         v['DO_GNG'] = True
         v['GNGSPEED'] = 2.0
         v['GNG_ARROWISALWAYSRED'] = True
@@ -142,7 +142,7 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['EVENT_printToTerminal']=True
         v['EVENT_printToTerminalAllowed']=[0, 40]  # only allow the stops, which are < 40.
         
-        v['INSTR']='GO - NOGO Task\nRemember, respond as FAST as you can once you see the arrow.\n\n'+'However, if you see it becomes RED, your task is to STOP yourself '+'from pressing.\n\n'+'Stopping and Going are equally important.'
+        v['INSTR']='Press only\nwhen Green\n\n(not Red!)'
         # INSTR='Remember, respond as FAST as you can once you see the arrow.\n'+'However, if you hear a beep, your task is to STOP yourself \n'+'from pressing. Stopping and Going are equally important.'
     
         # because I put the settings file into one directory lower than this one, if it's called from another script.
@@ -2135,7 +2135,7 @@ def wait_for_mri(G):
                 INCORRECT_TEXT='One moment of patience..  (You pressed: %s)' % (buttonPressed)
                 incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
                 drawIncorrect=True
-                incor_clock.reset()                
+                incor_clock.reset()
                         
     
 def test_buttons(G):
@@ -2145,12 +2145,12 @@ def test_buttons(G):
     INSTR=G['v']['INSTR']
     eh=G['eh']
     BUTTONS=G['v']['BUTTONS']
-    TEXT=['Test: Press the left (L) button','Test: Press the right (R) button']
+    TEXT=['Test: Press the button','Test: Press the right (R) button']
     testinstr=[visual.TextStim(win, TEXT[0],pos=(0, 0.5), units='norm'), visual.TextStim(win, TEXT[1],pos=(0, 0.5), units='norm')]
     testarrows = [G['vstims']['S']['al'][2], G['vstims']['S']['ar'][2]]
     
 
-    for i, side in enumerate(['L','R']):
+    for i, side in enumerate(['L']):
         incor_clock=clock.Clock()
         correctlyPressed=False
         drawIncorrect=False
@@ -2199,7 +2199,7 @@ def instr_screen0(G):
     contstim2=visual.TextStim(win, 'with Eyes Open / Eyes Closed...',pos=(0.0, 0.81), height=0.08, units='norm')
     fstim.draw()
     contstim.draw()
-    contstim2.draw()
+    # contstim2.draw()
     win.flip()
     event.waitKeys()
         
@@ -2216,7 +2216,7 @@ def instr_screen(G):
     startstim=visual.TextStim(win, 'Press to Start!',pos=(0.0, 0.0), height=0.12, units='norm')
     
     # INSTR='Remember, respond as FAST as you can once you see the arrow.\n\n'+'However, if you hear a beep, your task is to STOP yourself '+'from pressing.\n\n'+'Stopping and Going are equally important.'
-    instr1=visual.TextStim(win, INSTR)
+    instr1=visual.TextStim(win, INSTR, height=0.13, units='norm')
     contstim.draw()
     instr1.draw()
 
@@ -2695,7 +2695,6 @@ if __name__== "__main__":
         
         #measure_artifact_program(G)
                 
-        test_buttons(G)
         instr_screen0(G)
         
         #eo_stim(G)
