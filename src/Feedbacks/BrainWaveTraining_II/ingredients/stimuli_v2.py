@@ -2685,8 +2685,7 @@ def run_main_program(G, st, CP, ex, pr):
         
         loop.run_until_complete(asyncio.wait([asyncio.async(handle_exception(runTrial,trialType, G, st, CP, ex, loop))]))   
     
-    
-    # give it another second:
+        # give it another second:
     
 
 

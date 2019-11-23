@@ -20,7 +20,7 @@
 
 """Main Module for Feedback Controller executable."""
 
-#import pyglet
+# import pyglet
 #pyglet.options['shadow_window'] = False
 
 import logging
@@ -116,6 +116,7 @@ the Free Software Foundation; either version 2 of the License, or
         logging.exception("Could not start Feedback Controller, is another instance already running?")
         return
     try:
+        # import pdb; pdb.set_trace()
         fc.start()
     except (KeyboardInterrupt, SystemExit):
         logging.debug("Caught keyboard interrupt or system exit; quitting")

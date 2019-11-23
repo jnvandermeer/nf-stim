@@ -46,8 +46,8 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
         self.fontheight=200
         
         self.STARTKEYS=['return','t']
-        self.MONITOR_PIXWIDTH=1280
-        self.MONITOR_PIXHEIGHT=1024
+        self.MONITOR_PIXWIDTH=1366
+        self.MONITOR_PIXHEIGHT=768
         self.MONITOR_WIDTH=40.  # width of screen
         self.MONITOR_HEIGHT=30.  # height of screen
         self.MONITOR_DISTANCE=70.  # distance to screen
@@ -59,7 +59,7 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
         self.MONITOR_FLIPHORIZONTAL = False
         self.MONITOR_FLIPVERTICAL = False
         
-        self.MONITOR_NSCREENS=2
+        self.MONITOR_NSCREENS=1
         self.MONITOR_DISPLAYONSCREEN=1
         self.MONITOR_FULLSCR = False
         self.MONITOR_ALLOWGUI = False

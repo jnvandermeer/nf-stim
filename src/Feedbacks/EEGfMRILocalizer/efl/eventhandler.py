@@ -143,7 +143,7 @@ class eventHandler(multiprocessing.Process):
         self.LPTTriggerWaiting=float(LPTTriggerWaiting)
         self.printToTerminal=printToTerminal
         self.printToTerminalAllowed=range(printToTerminalAllowed[0], printToTerminalAllowed[1])
-
+        self.sendviaLSL=True
         
             
         self._queue = multiprocessing.Queue()
@@ -262,6 +262,24 @@ class eventHandler(multiprocessing.Process):
             expLogger = open(self.newLogFile,'w')  # , logging.EXP)
             print('Opened: %s\n' % expLogger)
 
+
+
+        if self.sendviaLSL:
+            # initialize the LSL here, see code sample:
+            # https://github.com/kaczmarj/psychopy-lsl
+            from pylsl import StreamInfo, StreamOutlet
+            info = StreamInfo(
+                name='MarkerStream', 
+                type='Markers', 
+                channel_count=1,
+                channel_format='int32', 
+                source_id='MarkerStream-123'
+            )
+
+            # Initialize the stream.
+            outlet = StreamOutlet(info)
+
+
         
         while not self._shutdown.is_set():
             
@@ -283,6 +301,10 @@ class eventHandler(multiprocessing.Process):
                     print('That code doesn\'''t exist: %s\n' % message)
                     break
                     
+
+                if self.sendviaLSL:
+                    # we put it into the LSL stream!
+                    outlet.push_sample([code_to_send])
                 
                 # print(message)
                 # print(code_to_send)
