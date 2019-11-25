@@ -1,0 +1,8 @@
+Internet Archive:
+
+https://archive.org/download/archlinux_pkg_mesa/
+
+Look for: 
+mesa-18.0.3-4-x86_64.pkg.tar.xz
+
+You also need to use pip to install pyglet=1.3.2 and pychopy=1.85.2

@@ -4,3 +4,11 @@
 - Psychopy - for making our neurophysiology
 
 
+todo in env for windows
+- remove qt
+- remove nbconvert
+- add trollius (via conda)
+- add ipdb
+- add future
+- add configobj
+
