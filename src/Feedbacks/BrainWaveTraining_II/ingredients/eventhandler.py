@@ -1,102 +1,119 @@
-#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 27 14:27:56 2018
+Created on Wed Sep  5 12:16:07 2018
 
-@author: johan
+@author: User
 """
 
+from psychopy import clock, parallel
 import socket
 import time
 import multiprocessing
 import os
-# import glob
-# import re
+import glob
+import re
 
-from psychopy import clock, parallel
-
-from Feedbacks.BrainWaveTraining.tools.create_incremental_filename import create_incremental_filename
-
-# from Feedbacks.BrainWaveTraining.tools.eventhandler import eventhandler
-
-
-
-def start_eh(G, dummy=False):
-    
-    
-    EVENT_destip=G['v']['EVENT_destip']
-    EVENT_destport=G['v']['EVENT_destport']
-    EVENT_LPTTrigWaitTime=G['v']['EVENT_LPTTrigWaitTime']
-    EVENT_sendParallel=G['v']['EVENT_sendParallel']
-    EVENT_sendTcpIp=G['v']['EVENT_sendTcpIp']
-    EVENT_LPTAddress=G['v']['EVENT_LPTAddress']
-    EVENT_sendLogFile=G['v']['EVENT_sendLogFile']
-    EVENT_printToTerminal=G['v']['EVENT_printToTerminal']
-    EVENT_printToTerminalAllowed=G['v']['EVENT_printToTerminalAllowed']
-    
-    mainClock=G['mainClock']
-    MSGDICT=G['evcodes']
-    LOG_PATHFILE_EVENT=G['v']['LOG_PATHFILE_EVENT']
-    print('----')
-    print(MSGDICT)
-    print('EVENT_sendParallel is: ' + str(EVENT_sendParallel))
-    print('----')
-
-    if dummy is False:    
-        eh=eventHandler(
-            mainClock, 
-            messagedict=MSGDICT,
-            destip=EVENT_destip,
-            destport=EVENT_destport,
-            LPTAddress=EVENT_LPTAddress,
-            LPTTriggerWaiting=EVENT_LPTTrigWaitTime,
-            filename=LOG_PATHFILE_EVENT,
-            sendParallel=EVENT_sendParallel, 
-            sendTcpIp=EVENT_sendTcpIp, 
-            sendLogFile=EVENT_sendLogFile,
-            printToTerminal=EVENT_printToTerminal,
-            printToTerminalAllowed=EVENT_printToTerminalAllowed  # only allow the stops, which are < 40.
-            )
-    
+MSGDICT={
         
-    
-        print('----><----')
-        print(eh)
-        eh.start()
-        # time.sleep(10)
-        #print('<---><----')
-        # eh.send_message('aud_l55')
-        print('<---><----')
-        print(eh)
+        # Stop / Inhibit Response Codes
+        'BeginGoL':1,
+        'BeginGoR':2,
+        'BeginStopL':3,
+        'BeginStopR':4,
         
-        # return eh
+        'RespL':5,
+        'RespR':6,
+
+        # somce some responses are not logged (because of too soon or too late or multiple presses)
+        # log the keyboard separately.
+        'KeyL': 7,        
+        'KeyR': 8,
+        'WrongKey': 9,
+
+        'CorrectGoL':11,
+        'CorrectGoR':12,
+        'CorrectStopL':13,
+        'CorrectStopR':14,
+        'ErrorCommission':15,
+        
+        # don't expect too many of these:
+        'ErrorOmission':21,
+        'PressedTooSoon':22,
+        'PressedTooLate':23,
+        'TooManyResponses':24,
+        'WrongSideErrorCommission':25,
+        'WrongSideGo':26,
+        
+        'gonogo_BEGIN': 30,
+        'gonogo_END': 31,
 
         
-    else:
-        
-        eh=dummy_logger()
-        print('<---><----')
-        print(eh)
-        
 
-    G['eh']=eh        
-    return(G)
-    
-    
-    
-    
-# define our dummy logger:    
-class dummy_logger():
-    def send_message(self, m):
-        pass
-        print(m)
+        # visual SSVEP checkerboard codes (8 and 13 Hz)
+        #
+        # when the contrast inverts, for SSVEP deconvolution
+        'vis_l8':81,
+        'vis_r8':82,
+        'vis_l13':131,
+        'vis_r13':132,
+
+        # begin and end markers (for EEG frequency analysis), 8Hz and 13Hz
+        'vis_bl8':83,
+        'vis_br8':84,
+        'vis_el8':85,
+        'vis_er8':86,
+ 
+        'vis_bl13':133,
+        'vis_br13':134,
+        'vis_el13':135,
+        'vis_er13':136,
+
+        'vis_BEGIN': 80,
+        'vis_END': 140,
+
+        # audio SSVEP codes (40 Hz and 55 Hz)
+        #
+        # when audio sample starts -- one audio sample contains 32 
+        'aud_l40':41,
+        'aud_r40':42,
+        'aud_l55':51,
+        'aud_r55':52,
+
+        'aud_bl40':43,
+        'aud_br40':44,
+        'aud_el40':45,
+        'aud_er40':46,
+ 
+        'aud_bl55':53,
+        'aud_br55':54,
+        'aud_el55':55,
+        'aud_er55':56,
+        
+        'aud_BEGIN': 40,
+        'aud_END': 60,
+        
+        'eo_BEGIN': 201,
+        'eo_END': 202,
+        'ec_BEGIN': 203,
+        'ec_END': 204,
+            
+        }    
+
+
+
+if __name__== "__main__":
+
+    print(__name__)
+    print(__name__)
+    print(__name__)
+    print(__name__)
     
     
 
 class eventHandler(multiprocessing.Process):
     def __init__(self, 
                  clock, 
-                 messagedict={},
+                 messagedict=MSGDICT,
                  destip='127.0.0.1', 
                  destport=6500, 
                  LPTAddress=0x0378,
@@ -136,10 +153,40 @@ class eventHandler(multiprocessing.Process):
         self._shutdown = multiprocessing.Event()
         
 
-        # try the dirty trick to put both logs in the same place.
-        filename = os.path.join('..', filename)
+        # print(self.clock.getTime())
+        # check whether there's another logfile - in log directory
+        # make efl_triggers version of it, too.
+        logdir=os.path.dirname(filename)
         
-        self.newLogFile = create_incremental_filename(filename)
+        if __name__ != "__main__":
+            logdir = os.path.join(os.path.dirname(os.path.realpath(__file__)),logdir)
+        
+        logbasename, ext = os.path.splitext(os.path.basename(filename))
+
+       
+        # figure out if there's a log directory, if not --> make it:
+        if not os.path.exists(logdir):
+            os.makedirs(logdir)
+        
+        # figure out which files reside within this logfile directory:
+        if len(glob.glob(logdir + os.sep + logbasename + "*" + ext)) == 0:
+            logcounter=0
+        else:
+            # figure out biggest number:
+            matches=[match for match in [re.match(logbasename+'([0-9]*)'+ext,item) for item in os.listdir(logdir)]]
+            newlist=[]
+            for match in matches:
+                if match is not None:
+                    newlist.append(match.group(1))
+            logcounter = max([int(n) for n in newlist])
+                    
+                    
+        
+        # so make just another logfile on top of this one -- it'll be timestamped    
+        logcounter += 1
+        
+        # this is the new logfile:
+        self.newLogFile=os.path.join(logdir,logbasename+'%d'%logcounter + ext )
         
         # print(self.newLogFile)
         
@@ -218,7 +265,7 @@ class eventHandler(multiprocessing.Process):
         
         while not self._shutdown.is_set():
             
-            time.sleep(0.0005) # take it easy on the CPU?
+            time.sleep(0.0005) # take it easy on the CPU
             
             while not self._queue.empty():
                 
@@ -234,7 +281,6 @@ class eventHandler(multiprocessing.Process):
                 except:
                     
                     print('That code doesn\'''t exist: %s\n' % message)
-                    
                     break
                     
                 
@@ -378,3 +424,5 @@ if __name__ == "__main__":
     ev.join()
     
     print('done')
+    
+

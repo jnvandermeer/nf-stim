@@ -1,5 +1,6 @@
 #from __future__ import absolute_import, division
 
+# import pyglet
 from MainloopFeedback import MainloopFeedback
 from psychopy import sound, gui, visual, core, data, event, logging
 from psychopy.constants import (NOT_STARTED, STARTED, PLAYING, PAUSED,

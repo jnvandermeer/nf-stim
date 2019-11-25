@@ -41,6 +41,7 @@ LOCALHOST = "127.0.0.1"
 import thread
 
 def ipcloop():
+    # import pdb; pdb.set_trace()
     """Start the IPC loop."""
     asyncore.loop()
 

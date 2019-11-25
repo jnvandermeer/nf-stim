@@ -1,15 +1,15 @@
 import random
-import sys
-import math
-import random
-import os
-import time
-import pickle
+#import sys
+#import math
+#import random
+#import os
+#import time
+#import pickle
 
 
 # in * is also: from psychopy import locale_setup, sound, gui, visual, core, data, event, logging
 # visual, sound, core, data, event and logging are the crucial ones.
-import pygame
+# import pygame
 import psychopy
 from psychopy import locale_setup, sound, gui, visual, core, data, event, logging # I guess this is the best way?
 
@@ -19,7 +19,7 @@ from Feedbacks.StopVigilanceTask.efl import eventhandler
 from Feedbacks.StopVigilanceTask.efl import visualHelper
 
 # the actual experiment:
-from Feedbacks.StopVigilanceTask.efl.efl_v12 import * 
+from Feedbacks.StopVigilanceTask.efl.efl_v14 import * 
 
 
 
