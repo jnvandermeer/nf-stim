@@ -125,7 +125,7 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['VIS_angleFreq']=6
         v['VIS_checkerSize']=1.5
         v['VIS_checkerSpeedMultiplier']=1.0
-        v['EYESCLOSED_TIME']=120.
+        v['EYESCLOSED_TIME']=25.
         
         v['EX_EV_IGNORE_KEYS']=['5','t']
         
@@ -2174,7 +2174,7 @@ def instr_screen0(G):
     INSTR=G['v']['INSTR']
     eh=G['eh']
 
-    fstim=visual.TextStim(win, 'Relax and watch the crosshair.',pos=(0.0, 0.0), height=0.12, units='norm')
+    fstim=visual.TextStim(win, 'Open and close your eyes as instructed on the screen.',pos=(0.0, 0.0), height=0.12, units='norm')
     # fstim=visual.TextStim(win, 'Press to continue with Eyes Open / Eyes Closed...',pos=(0.0, 0.0), height=0.12, units='norm')
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
     contstim2=visual.TextStim(win, 'with Eyes Open / Eyes Closed...',pos=(0.0, 0.81), height=0.08, units='norm')
@@ -2219,7 +2219,7 @@ def eo_stim(G):
     eh=G['eh']
     incor_clock=clock.Clock()
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    ecstim = visual.TextStim(win, '+',pos=(0.0, 0.0), height=0.12, units='norm')
+    ecstim = visual.TextStim(win, 'Eyes open',pos=(0.0, 0.0), height=0.12, units='norm')
     
 
     ecstim.draw()
@@ -2236,7 +2236,7 @@ def eo_stim(G):
 
 def ec_stim(G):
     
-    snd_endeyesclosed = sound.backend_pygame.SoundPygame(value=391,secs=0.8,loops=0)
+    snd_endeyesclosed = sound.backend_pygame.SoundPygame(value=391,secs=0.1,loops=0)
     snd_endeyesclosed.volume=0.5
     EYESCLOSED_TIME=G['v']['EYESCLOSED_TIME']
     win=G['win']
@@ -2676,30 +2676,30 @@ if __name__== "__main__":
         
         #measure_artifact_program(G)
                 
-        # test_buttons(G)
-        # instr_screen0(G)
+        test_buttons(G)
+        instr_screen0(G)
         
-        eo_stim(G)
+        #eo_stim(G)
         #ec_stim(G)
         logging.flush()
 
         
-        #test_buttons(G)
-        #instr_screen(G)
-        #logging.flush()
+        test_buttons(G)
+        instr_screen(G)
+        logging.flush()
         
     
         # print(G['eh'].is_alive())
         # print('----><----')
         # G['eh'].send_message('boe!')
         # print('----><----')
-        # run_main_loop(G)
+        run_main_loop(G)
         logging.flush()
     
-        #eo_stim(G)
-        #ec_stim(G)
-        #end_task(G)
-        #logging.flush()
+        eo_stim(G)
+        ec_stim(G)
+        end_task(G)
+        logging.flush()
         
         # write it away...
 

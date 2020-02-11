@@ -44,7 +44,6 @@ import sys
 import traceback
 import time
 import glob
-import random
 
 
 
@@ -74,18 +73,14 @@ import visualHelper
 # this is a trick to allow another script, that imports THIS script, to set all of the local variables
 # BEFORE the following stimulus declarations are going to run.
 
-def init_G():  # so we do this ourselves in the pyff framework:
+def init_G():
     if __name__== "__main__":
         
         
         v=dict()
         
-        
-        v['STARTKEYS'] = ['return','t']
-        v['STARTMRIKEYS'] = ['5']
-        
-        v['MONITOR_PIXWIDTH']=1280
-        v['MONITOR_PIXHEIGHT']=1024
+        v['MONITOR_PIXWIDTH']=800
+        v['MONITOR_PIXHEIGHT']=600
         v['MONITOR_WIDTH']=40.  # width of screen
         v['MONITOR_HEIGHT']=30.  # height of screen
         v['MONITOR_DISTANCE']=70.  # distance to screen
@@ -100,7 +95,7 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['MONITOR_NSCREENS']=2
         v['MONITOR_DISPLAYONSCREEN']=1
         v['MONITOR_FULLSCR'] = False
-        v['MONITOR_ALLOWGUI'] = False
+        v['MONITOR_ALLOWGUI'] = True
         
         v['LOGDIR']='log'  # for if you want to change this...
         v['LOGFILEBASE']='efl'  # how to call our logfile --> it adds a number each time
@@ -114,22 +109,15 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['DO_AUDIO'] = True
         v['DO_GNG'] = True
         v['GNGSPEED'] = 1.0
-        v['GNG_ARROWISALWAYSRED'] = True
-        v['GNG_ARROWGOESRED'] = True
-        v['GNG_ARROWGOESRED_DELAY'] = 0.005
-        v['GNG_SELECT_NUMBER'] = 0  # if it's a 0 -- then select randomly.        
+        v['GNG_ARROWGOESRED'] = False
         v['AUDIOTONE_ERROR_COMMISSION'] = False
-        v['AUDIOTONE_STOP'] = False
+        v['AUDIOTONE_STOP'] = True
         v['VIS_SHOWOPPOSITE'] = False
         v['VIS_radialFreq']=6
         v['VIS_angleFreq']=6
         v['VIS_checkerSize']=1.5
         v['VIS_checkerSpeedMultiplier']=1.0
-        v['EYESCLOSED_TIME']=120.
-        
-        v['EX_EV_IGNORE_KEYS']=['5','t']
-        
-        
+        v['EYESCLOSED_TIME']=25.
         
         v['EVENT_destip']='127.0.0.1'
         v['EVENT_destport']=6050
@@ -140,9 +128,9 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['EVENT_sendTcpIp']=True
         v['EVENT_sendLogFile']=True
         v['EVENT_printToTerminal']=True
-        v['EVENT_printToTerminalAllowed']=[0, 40]  # only allow the stops, which are < 40.
+        v['EVENT_printToTerminalAllowed']=range(256)  # only allow the stops, which are < 40.
         
-        v['INSTR']='GO - NOGO Task\nRemember, respond as FAST as you can once you see the arrow.\n\n'+'However, if you see it becomes RED, your task is to STOP yourself '+'from pressing.\n\n'+'Stopping and Going are equally important.'
+        v['INSTR']='Remember, respond as FAST as you can once you see the arrow.\n\n'+'However, if you hear a beep, your task is to STOP yourself '+'from pressing.\n\n'+'Stopping and Going are equally important.'
         # INSTR='Remember, respond as FAST as you can once you see the arrow.\n'+'However, if you hear a beep, your task is to STOP yourself \n'+'from pressing. Stopping and Going are equally important.'
     
         # because I put the settings file into one directory lower than this one, if it's called from another script.
@@ -158,8 +146,6 @@ def init_G():  # so we do this ourselves in the pyff framework:
         mainClock=clock.Clock()
         G['mainClock']=mainClock
     return(G)
-
-    # DO_AUDIO=True
 
     # G['win']=win    
     # only use the G if it's going to be used later on in the gonogo, in the stop or in the visual
@@ -491,11 +477,11 @@ def init_stimuli(G):
                   (0, 1),(0, 0.7071/arrowPinch), 
                   (-0.7071, 0.7071/arrowPinch)]
     
-    arrowl = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkgreen', 
-                             size=stimSize/1.973, ori=180, lineColor='darkgreen', autoLog=AUTOLOGIT)
+    arrowl = visual.ShapeStim(win, vertices=arrowVert, fillColor='white', 
+                             size=stimSize/1.973, ori=180, lineColor='white', autoLog=AUTOLOGIT)
     
-    arrowr = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkgreen', 
-                             size=stimSize/1.973, ori=0, lineColor='darkgreen', autoLog=AUTOLOGIT)
+    arrowr = visual.ShapeStim(win, vertices=arrowVert, fillColor='white', 
+                             size=stimSize/1.973, ori=0, lineColor='white', autoLog=AUTOLOGIT)
     
     arrowlr = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkred', 
                              size=stimSize/1.973, ori=180, lineColor='darkred', autoLog=AUTOLOGIT)
@@ -643,37 +629,9 @@ def init_eventcodes(G):
             
             'aud_BEGIN': 40,
             'aud_END': 60,
-
             
-            'eo_BEGIN': 201,
-            'eo_END': 202,
-            'ec_BEGIN': 203,
-            'ec_END': 204,
-
-
-
-
-            'h4l':221,
-            'h4r':222,
-            'h8l':223,
-            'h8r':224,
-            'v4u':225,
-            'v4d':226,
-            'v8u':227,
-            'v8d':228, 
-            'c':229, 
-            'hvest':231,
-            'hvestp':232,
-            'vvest':233,
-            'vvestp':234,
-            'eyeblinks':241,
-            'neckl':242,
-            'neckr':243,
-            'jaw':244,
-            'eyebrows':245,
-            'swallow':246,
-            'cheeks':247,
-
+            'ec_BEGIN': 201,
+            'ec_END': 202,
                 
             }        
             
@@ -719,7 +677,6 @@ def init_gng(G):
     tooSoonTime=G['v']['tooSoonTime']
     AUDIOTONE_ERROR_COMMISSION=G['v']['AUDIOTONE_ERROR_COMMISSION']
     AUDIOTONE_STOP=G['v']['AUDIOTONE_STOP']
-    GNG_SELECT_NUMBER=G['v']['GNG_SELECT_NUMBER']
     
     
     G['S']=dict()
@@ -755,19 +712,10 @@ def init_gng(G):
     # Obtain the Go Nogo Timing Parameters
     # for stop-signal task: read in the critucal timings from one of my 500 
     # OPTIMAL GLM Design specifications:
-    
-    if GNG_SELECT_NUMBER == 0:
-        tmp_rand_number = random.randint(1,193)
-    else:
-        tmp_rand_number = int(GNG_SELECT_NUMBER)  # shameless typecasting.
+    tmp_rand_number = random.randint(1,501)
     
     
-    
-    timingsfile='gngtimings/newparam_%d.txt' % tmp_rand_number
-    
-    # log that, too.
-    logging.data('GNG SELECTED LOGFILE: %s' % timingsfile)
-    #timingsfile='gngtimings/tmpFile.txt'
+    timingsfile='gngtimings/tmpFile.txt'
     
     # we do these checks throughout.
     if __name__ != "__main__":
@@ -849,12 +797,6 @@ def handle_gonogo(G):
     This function is to be run within the asyncio loop.
     '''
  
-    GNG_ARROWGOESRED=G['v']['GNG_ARROWGOESRED']
-    GNG_ARROWGOESRED_DELAY=G['v']['GNG_ARROWGOESRED_DELAY']
-    GNG_ARROWISALWAYSRED=G['v']['GNG_ARROWISALWAYSRED']
-    EX_EV_IGNORE_KEYS=G['v']['EX_EV_IGNORE_KEYS']
-    
-    BUTTONS=G['S']['BUTTONS']
     snd_stopsignal=G['S']['snd_stopsignal']
     # we just need it here...
     STOP=1
@@ -865,7 +807,7 @@ def handle_gonogo(G):
     myMultiStairs = G['S']['myMultiStairs']
     
     
-    DO_GNG = G['v']['DO_GNG']
+    DO_GNG = G['DO_GNG']
     
 
     # if the time it took tov respond is smaller than this time --> invalid.
@@ -904,10 +846,6 @@ def handle_gonogo(G):
 
   
     if DO_GNG:
-        
-        G['eh'].send_message('gonogo_BEGIN')
-        
-        
         # yeah, do all kinds of init here.
         for trialNumber in range(len(G['S']['SSstopgo'])):
     
@@ -966,13 +904,7 @@ def handle_gonogo(G):
             G['S']['goNogoStim']=G['vstims']['S']['pre']
             while cl.getTime() < 0.5 * GNGSPEED:
                 
-                # event.getKeys(keyList=[SCANNER_KEY])  # get out the scanner keys, if it's there...
                 evs=event.getKeys(timeStamped=cl)
-                # so remove all the MRI_Keys from this? - that should be OK. No other buttons should be pressed anyway.
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]  # named tuple unpacking, in a list comprehension, and conditional. ... and.. READABLE.
-
-                
-                
                 # check if they press too SOON:
                 if len(evs)>0 and not responded:
                     buttonsPressed, timesPressed = zip(*evs)
@@ -1034,15 +966,6 @@ def handle_gonogo(G):
             reactionTime = None
             ShowFix=False
             event.clearEvents()
-            
-            
-            
-            if thisTrialType is STOP and GNG_ARROWISALWAYSRED:
-                G['S']['goNogoStim']=G['vstims']['S'][thisDirection+'r']
-            
-            
-            
-            
             while currentTime < 1.0 * GNGSPEED:
                 currentTime = cl.getTime()
                 
@@ -1050,7 +973,6 @@ def handle_gonogo(G):
                 # make the arrow (+ circle)
     
                 evs=event.getKeys(timeStamped=cl)
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]
                 
                 
                 if len(evs)>0:
@@ -1076,6 +998,9 @@ def handle_gonogo(G):
                     buttonPressed, RTime = allResponses[0]
                     # LOG this event... (i.e. send trigger)
 
+
+                if ShowFix:
+                    G['S']['goNogoStim']=G['vstims']['S']['fix']    
 
                 # once a button is pressed -- display fixation point again.
                 if responded and not responseHandled:
@@ -1105,16 +1030,6 @@ def handle_gonogo(G):
                         else:
                             G['eh'].send_message('WrongKey')
 
-                            
-                if ShowFix:
-                    if thisTrialType is STOP and responded and GNG_ARROWGOESRED:
-                        if currentTime - RTime < GNG_ARROWGOESRED_DELAY: # show red for a whilethisSSD/1000. < 
-                            G['S']['goNogoStim']=G['vstims']['S'][thisDirection+'r']
-                            # pass
-                        else:
-                            G['S']['goNogoStim']=G['vstims']['S']['fix'] 
-                    else:
-                        G['S']['goNogoStim']=G['vstims']['S']['fix']    
     
         
                 # what happens when a signal needs to be presented that it is a stop trial?
@@ -1218,7 +1133,6 @@ def handle_gonogo(G):
                     flushed=True
                     
                 evs=event.getKeys(timeStamped=cl)
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]
                                 # do this anyway.
                 if len(evs)>0:
                     buttonsPressed, timesPressed = zip(*evs)
@@ -1301,11 +1215,9 @@ def handle_gonogo(G):
         except:
             print('something went wrong here.')
         
-    
-    
-    if DO_GNG:
-        G['eh'].send_message('gonogo_END')
-    
+        #print('this is the last one, I')
+
+    # print('this is the last one, II')
     
     # tell the visual to stop flipping, allowing visual to end their part of the async loop:
     G['S']['GNG_STOPPED'] = True
@@ -1387,236 +1299,6 @@ def init_audio(G):
     return(G)
 
 
-
-
-
-
-@asyncio.coroutine
-def handle_visual_contents(G):
-    '''
-    This should handle the CONTENTS of the visual stimuli, and store them in G['V']['contents']
-    This will ensire that visual contents are time-derived instead of frame-derived. Had to go this
-    way due to some high-performance graphics cards which can work much faster than a screen can 
-    update itself.
-    
-    Markers should be managed here, too.
-    
-    '''
-    
-    
-    print('handle_vis_contents has started')
-    
-    win=G['win']
-    
-    
-    DO_VISUAL = G['v']['DO_VISUAL']
-    
-    visual_stim_list = [
-            [17.5,35.,'left','8'],
-            [135.,145.,'left','8'],
-            [280.,290.,'left','8'],
-            [87.5,105.,'left','13'],
-            [217.5,235.,'left','13'],
-            [320.,330.,'left','13'],
-            [52.5,70.,'right','8'],
-            [155.,165.,'right','8'],
-            [300.,310.,'right','8'],
-            [115.,125.,'right','13'],
-            [182.5,200.,'right','13'],
-            [252.5,270.,'right','13']
-            ]
-    
-    visdict={i[0]: i for i in visual_stim_list}
-    
-    times = [i[0] for i in visual_stim_list]
-    times.sort()
-    times.append(340. + 1000.)  # some insanely high number that'll never be reached!
-                                # a thousand deaths for this dirty hack. 
-    nextTime=times.pop(0)
-    
-    VIS_checkerSpeedMultiplier=G['v']['VIS_checkerSpeedMultiplier']
-    
-    vis_times={'8':[x * 1./VIS_checkerSpeedMultiplier for x in [0.111, 0.253,0.373,0.475, 0.600]],'13':[x * 1./VIS_checkerSpeedMultiplier for x in [0.078,0.151,0.214,0.300,0.376,0.442,0.525,0.600]]}
-    
-    
-    #audio_stim_list =  G['A']['audio_stim_list']
-    #astims = G['astims']
-    eh=G['eh']
-
-    # DO_AUDIO = G['v']['DO_AUDIO']
-    tmpvstimsllabels=['l', 'lf']
-    tmpvstimsrlables=['r', 'rf']
-    
-    visualClock=clock.Clock()
-    playing=False
-    doseq=False
-    # withinVisualBlock=False
-    # prevWithinVisualBlock=False
-    # RunAudio=True
-    playClock=clock.Clock()
-    
-    currentTime=visualClock.getTime()
-    
-    G['vstims']['V']['current']=[[]]
-    
-    # log the beginning...
-    
-    while currentTime < 340.: #currentTime < 340.:
-        
-
-        currentTime = visualClock.getTime()   
-        # print('hello')
-        # print(currentTime)
-        
-        if not playing:     # I can safely use this since only one audio is playing at a time.
-
-
-            # simply, prevent unpacking all the time for EACH screen flip = faster.
-            if currentTime > nextTime:
-            
-                b, e, side, freq = visdict[nextTime]
-
-                nextTime=times.pop(0)
-                    
-                if b < currentTime < e:
-                    
-                    #print('--------------------------> Commencing Playing Visual')
-                    #print('--------> CAN I ENTER HERE??')
-                    #print(currentTime)
-                    #print(side)
-                    #print(freq)
-                    # currentStim = vis_times[freq]
-                    # withinVisualBlock=True
-                    #astims[stim].play()
-                    
-                    vis_times_position = 0
-                    vis_times_position_limit = len(vis_times[freq])
-                    
-                    # playDuration=max(vis_times[freq])
-                    playing=True
-                    playClock.reset()
-                    doseq = True
-                    vis_times_position=0
-                    
-                    
-                    currentSide = side
-                    currentFreq = freq
-                    currentVisTimes = vis_times[freq]
-                    currentVisTimesLength = len(vis_times[freq])
-                    currentEndingTime = e
-                    
-
-                    # sending messages:
-                    if DO_VISUAL:
-                        msg = 'vis_' + 'b' + currentSide[0] + freq
-                        win.callOnFlip(eh.send_message,msg)
-                        logging.data(msg)
-
-
-                    
-        if doseq:
-            
-            playTime = playClock.getTime()
-            if playTime > currentVisTimes[vis_times_position] and vis_times_position < vis_times_position_limit:
-                #print('--------> CAN I ENTER HERE??')
-                #print(currentSide)
-                #print(currentFreq)
-                # print(side)
-                vis_times_position += 1
-                #print(vis_times_position)
-                if currentSide == 'left':
-                    tmpvstimsllabels=tmpvstimsllabels[::-1]
-                elif currentSide == 'right':
-                    tmpvstimsrlables=tmpvstimsrlables[::-1]                    
-    
-                if DO_VISUAL: 
-
-                    msg = 'vis_'+ currentSide[0] + currentFreq
-                    
-                    # print(msg)
-                    win.callOnFlip(eh.send_message,msg)
-                    logging.data(msg)
-                    
-                    
-                if playing:
-                    # set up what's in this list:                    
-                    if G['v']['VIS_SHOWOPPOSITE'] is False:
-                        if currentSide == 'left':
-                            G['vstims']['V']['current'][0]=[tmpvstimsllabels[0]]
-                        if currentSide == 'right':
-                            G['vstims']['V']['current'][0]=[tmpvstimsrlables[0]]
-                    else:
-                        G['vstims']['V']['current'][0]=[tmpvstimsllabels[0], tmpvstimsrlables[0]]
-                    
-                    
-            if vis_times_position == currentVisTimesLength:
-                #print('over here')
-                # reset it..
-                vis_times_position=0
-                playClock.reset()
-                if currentTime > currentEndingTime:
-                    doseq=False
-
-                
-
-            
-            
-            # print(G['vstims']['V']['current'][0])
-            if currentTime > currentEndingTime and doseq == False:  # figure out if something is playing 
-                playing=False
-                G['vstims']['V']['current']=[[]]
-                # print('--------------------------> Stopping Playing Visual')
-                if DO_VISUAL:
-                    msg = 'vis_' + 'e' + currentSide[0] + currentFreq
-                    #print(msg)
-                    #print(currentTime)
-                    win.callOnFlip(eh.send_message,msg)
-                    logging.data(msg)
-
-        # print(G['vstims']['V']['current'][0])
-        
-
-        # G['vstims']['V']['current'][0]=[tmpvstimsllabels[0], tmpvstimsrlables[0]]
-
-        yield From(asyncio.sleep(0))
-                
-        # try dealing with begin and ending markers:                    
-        #        if withinVisualBlock and not prevWithinVisualBlock:
-        #            messg=currentStim.replace('_','_b')
-        #            # print(messg)
-        #            logging.data(messg)
-        #            eh.send_message(messg)
-        #            prevWithinVisualBlock=True
-        #            
-        #        elif prevWithinVisualBlock and not withinVisualBlock:
-        #            messg=currentStim.replace('_','_e')
-        #            # print(messg)
-        #            logging.data(messg)
-        #            eh.send_message(messg)
-        #            prevWithinVisualBlock=False
-            
-        
-    # this will stop this loop, probably:
-    # currentTime=currentTime.getTime()
-    #if currentTime > 340.:
-    #    print('Stopping!')
-    #    RunAudio=False
-        
-    yield From(asyncio.sleep(0))  # pass control to someone else, while this guy sleeps a bit.
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
 @asyncio.coroutine
 def handle_audio(G):
     '''
@@ -1630,7 +1312,7 @@ def handle_audio(G):
     astims = G['astims']
     eh=G['eh']
 
-    DO_AUDIO = G['v']['DO_AUDIO']
+    DO_AUDIO = G['DO_AUDIO']
     
     
     audioClock=clock.Clock()
@@ -1638,13 +1320,13 @@ def handle_audio(G):
     withinAudioBlock=False
     prevWithinAudioBlock=False
     # RunAudio=True
-    playClock=clock.Clock()
+    
     
     currentTime=audioClock.getTime()
     
-    if DO_AUDIO:
-        logging.data('aud_BEGIN')
-        eh.send_message('aud_BEGIN')
+    
+    logging.data('aud_BEGIN')
+    eh.send_message('aud_BEGIN')
     # just before going in here -- LOG it.
     # log the beginning...
     
@@ -1667,7 +1349,7 @@ def handle_audio(G):
                         astims[stim].play()
                         playDuration=astims[stim].getDuration()
                         playing=True
-                        playClock.reset()
+                        playClock=clock.Clock()
                         
                         # print(stim)
                         logging.data(stim)
@@ -1704,9 +1386,9 @@ def handle_audio(G):
             
         yield From(asyncio.sleep(0))  # pass control to someone else, while this guy sleeps a bit.
             
-    if DO_AUDIO:        
-        logging.data('aud_END')
-        eh.send_message('aud_END')
+            
+    logging.data('aud_END')
+    eh.send_message('aud_END')
 
 
 
@@ -1771,18 +1453,6 @@ def handle_visual(G):
     run in the asyncio loop.
     '''
     
-    # set blank...
-    G['vstims']['V']['current'] = [[]]
-    
-    
-    # start (!!) the ehm, visual 'contents' handler:
-    loop=G['loop']
-    
-    # this adds another task to an already running loop. in this case -- figuring out the visuals.
-    # hope it works well.
-    loop.create_task(handle_exception(handle_visual_contents, G, loop))
-    yield From(asyncio.sleep(0))
-    
     # logging.console.setLevel(logging.DEBUG)
     # mainClock=G['mainClock']
     win=G['win']
@@ -1793,36 +1463,26 @@ def handle_visual(G):
     
     ASYNC_SLEEPTIME=G['V']['ASYNC_SLEEPTIME']
     
-    DO_VISUAL = G['v']['DO_VISUAL']
+    DO_VISUAL = G['DO_VISUAL']
     
-    # print ASYNC_SLEEPTIME
+    print ASYNC_SLEEPTIME
     
     frameCounter=0
     vstims=G['vstims']['V']
 
     totFrames=len(fd_with_markers)
     print(totFrames)
-    
-    
-    visContents = G['vstims']['V']['current'][0]
 
     # visualClock=clock.Clock()
     # this will run the entire length of the visual...
     # within this time, the stop signal task will (hopefully) finish.
     # OR... we can also just use a counter.
     
-    if DO_VISUAL:
-        eh.send_message('vis_BEGIN')
     
-    vis_time=0
-    vis_clock=clock.Clock()
+    # the visual task...
+    while frameCounter < totFrames:
     
     
-    # the visual task... here we'd need to use time infomration instead..
-    while vis_time < 340.0:
-    
-        visContents = G['vstims']['V']['current'][0]
-        vis_time = vis_clock.getTime()
         # the workflow
         # 1) Prepare everything + draw
         # 2) Prepare markers
@@ -1830,7 +1490,13 @@ def handle_visual(G):
     
         
         # all the visual stuff:
-        # frameIndex, visContents, markers = fd_with_markers[frameCounter]
+        frameIndex, visContents, markers = fd_with_markers[frameCounter]
+        
+        
+        
+        if frameIndex == 0:
+            eh.send_message('vis_BEGIN')
+        
         
         frameCounter += 1
         # deal with the visuals -- using vstims which should be accessible
@@ -1839,7 +1505,6 @@ def handle_visual(G):
         
         shapes=[]
         
-        # this handles the checkerboard.
         if DO_VISUAL:
             if len(visContents) > 0:
                 for item in visContents:
@@ -1872,10 +1537,10 @@ def handle_visual(G):
 
         # prepare the calls for the next iteration, including marlers;
         # deal with visual markers
-        #if DO_VISUAL:
-        #    if len(markers) > 0:
-        #        for marker in markers:
-        #            win.callOnFlip(eh.send_message,'vis_'+marker)
+        if DO_VISUAL:
+            if len(markers) > 0:
+                for marker in markers:
+                    win.callOnFlip(eh.send_message,'vis_'+marker)
                     # win.callOnFlip(print,marker)
         
         
@@ -1892,8 +1557,8 @@ def handle_visual(G):
         yield From(asyncio.sleep(0))
         
 
-    if DO_VISUAL:   
-        eh.send_message('vis_END')
+        
+    eh.send_message('vis_END')
     
 
     extra_frame_counter=0
@@ -2022,8 +1687,6 @@ def run_main_loop(G):
     
     loop=asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    
-    G['loop'] = loop  # store loop in G, too.
     #tasks = [
     #    asyncio.async(handleVisual()),
     #    asyncio.async(handleGonogo()),
@@ -2048,80 +1711,15 @@ def run_main_loop(G):
     loop.run_until_complete(asyncio.wait(tasks_dbg))   
     loop.close()
     #  close down our little Process, or it'll become a Zombie.
+    G['eh'].shutdown()        
+    G['eh'].join()
 
 
 
 #%% Pre and Post Functions:
-
-
-def wait_for_key(G):
-    event.clearEvents()
-    win=G['win']
-    eh=G['eh']
-    
-    testinstr=visual.TextStim(win, 'Wait a moment...',pos=(0, 0), units='norm')
-    incor_clock=clock.Clock()
-    correctlyPressed=False
-    drawIncorrect=False
-    
-    while not correctlyPressed:
-        testinstr.draw()
-        if drawIncorrect is True and incor_clock.getTime() < 1.0:
-            incorr_str.draw()
-        else:
-            drawIncorrect=False
-        win.flip()
-
-                
-        evs=event.getKeys(timeStamped=incor_clock)
-        if len(evs) > 0:
-            buttonsPressed, timesPressed = zip(*evs)
-            buttonPressed=buttonsPressed[0]
-            if buttonsPressed[0] in G['v']['STARTKEYS']:
-                correctlyPressed=True
-            else:
-                INCORRECT_TEXT='One moment of patience..  (You pressed: %s)' % (buttonPressed)
-                incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
-                drawIncorrect=True
-                incor_clock.reset()
-                
-                
-                
-def wait_for_mri(G):
-    event.clearEvents()
-    win=G['win']
-    eh=G['eh']
-    
-    testinstr=visual.TextStim(win, 'Waiting for Start...',pos=(0, 0), units='norm')
-    incor_clock=clock.Clock()
-    correctlyPressed=False
-    drawIncorrect=False
-    
-    while not correctlyPressed:
-        testinstr.draw()
-        if drawIncorrect is True and incor_clock.getTime() < 1.0:
-            incorr_str.draw()
-        else:
-            drawIncorrect=False
-        win.flip()
-
-                
-        evs=event.getKeys(timeStamped=incor_clock)
-        if len(evs) > 0:
-            buttonsPressed, timesPressed = zip(*evs)
-            buttonPressed=buttonsPressed[0]
-            if buttonsPressed[0] in G['v']['STARTMRIKEYS']:
-                correctlyPressed=True
-            else:
-                INCORRECT_TEXT='One moment of patience..  (You pressed: %s)' % (buttonPressed)
-                incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
-                drawIncorrect=True
-                incor_clock.reset()                
-                        
     
 def test_buttons(G):
     # check buttons
-    event.clearEvents() 
     win=G['win']
     INSTR=G['v']['INSTR']
     eh=G['eh']
@@ -2148,53 +1746,24 @@ def test_buttons(G):
             evs=event.getKeys(timeStamped=incor_clock)
             if len(evs) > 0:
                 buttonsPressed, timesPressed = zip(*evs)
-                buttonPressed=buttonsPressed[0]
                 if buttonsPressed[0] == BUTTONS[i]:
                     correctlyPressed=True
                 else:
                     
-                    INCORRECT_TEXT='That was not the correct button! You pressed: %s' % (buttonPressed)
+                    INCORRECT_TEXT='That was not the correct button! You pressed: %s' % (buttonsPressed)
                     incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
                     drawIncorrect=True
                     incor_clock.reset()
                 
 
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    # startstim=visual.TextStim(win, 'Press to Start!',pos=(0.0, 0.0), height=0.12, units='norm')
-    contstim.draw()
-    win.flip()
-    event.waitKeys()
-
-
-
-def instr_screen0(G):
-    
-    event.clearEvents() 
-    win=G['win']
-    INSTR=G['v']['INSTR']
-    eh=G['eh']
-
-    fstim=visual.TextStim(win, 'Relax and watch the crosshair.',pos=(0.0, 0.0), height=0.12, units='norm')
-    # fstim=visual.TextStim(win, 'Press to continue with Eyes Open / Eyes Closed...',pos=(0.0, 0.0), height=0.12, units='norm')
-    contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    contstim2=visual.TextStim(win, 'with Eyes Open / Eyes Closed...',pos=(0.0, 0.81), height=0.08, units='norm')
-    fstim.draw()
-    contstim.draw()
-    #contstim2.draw()
-    win.flip()
-    event.waitKeys()
-        
-
-def instr_screen(G):
-    
-    
-    event.clearEvents() 
-    win=G['win']
-    INSTR=G['v']['INSTR']
-    eh=G['eh']
-    # BUTTONS=G['v']['BUTTONS']
-    contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
     startstim=visual.TextStim(win, 'Press to Start!',pos=(0.0, 0.0), height=0.12, units='norm')
+    contstim.draw()
+    win.flip()
+    event.waitKeys()
+    
+    
+    
     
     # INSTR='Remember, respond as FAST as you can once you see the arrow.\n\n'+'However, if you hear a beep, your task is to STOP yourself '+'from pressing.\n\n'+'Stopping and Going are equally important.'
     instr1=visual.TextStim(win, INSTR)
@@ -2212,42 +1781,17 @@ def instr_screen(G):
 
 
 
-def eo_stim(G):
-    
-    EYESCLOSED_TIME=G['v']['EYESCLOSED_TIME']
-    win=G['win']
-    eh=G['eh']
-    incor_clock=clock.Clock()
-    contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    ecstim = visual.TextStim(win, '+',pos=(0.0, 0.0), height=0.12, units='norm')
-    
-
-    ecstim.draw()
-    win.flip()
-    eh.send_message('eo_BEGIN')
-    incor_clock=clock.Clock()
-    while incor_clock.getTime()<float(EYESCLOSED_TIME):
-        ecstim.draw()
-        win.flip()
-    eh.send_message('eo_END')
-    
-
-
-
 def ec_stim(G):
     
-    snd_endeyesclosed = sound.backend_pygame.SoundPygame(value=391,secs=0.8,loops=0)
-    snd_endeyesclosed.volume=0.5
-    EYESCLOSED_TIME=G['v']['EYESCLOSED_TIME']
     win=G['win']
     eh=G['eh']
     incor_clock=clock.Clock()  # this is so dirty coding, terrible!
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    ecstim = visual.TextStim(win, '... Close your eyes',pos=(0.0, -0.1), height=0.12, units='norm')
+    ecstim = visual.TextStim(win, 'Close your eyes!',pos=(0.0, 0.0), height=0.12, units='norm')
     ecstim.draw()
     win.flip()
     incor_clock.reset()
-    while incor_clock.getTime()<3.0:
+    while incor_clock.getTime()<1.5:
         pass
     eh.send_message('ec_BEGIN')
     # win.
@@ -2257,11 +1801,9 @@ def ec_stim(G):
     incor_clock.reset();
 
     while incor_clock.getTime()<float(EYESCLOSED_TIME):
-        win.flip()
+        pass
     
     
-    eh.send_message('ec_END')
-    snd_endeyesclosed.play()
     for i in range(5):
         win.color=[1, 1, 1]
         win.flip()
@@ -2278,14 +1820,8 @@ def ec_stim(G):
     win.flip()
     win.flip()
         
-
-    
-
-def end_task(G):
-
-    win=G['win']
+    eh.send_message('ec_END')
     endstim = visual.TextStim(win, 'Task Ended; Press to exit!',pos=(0.0, 0.0), height=0.12,units='norm')
-    contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
     
     endstim.draw()
     contstim.draw()
@@ -2293,272 +1829,11 @@ def end_task(G):
     event.clearEvents()
     event.waitKeys()
     
-    # shutting down the event handler, too. Otherwise, it'd be best to leave it open!
-    G['eh'].shutdown()        
-    G['eh'].join()
-    
-    
-    
-    # the following is repeated logic -- but effective
-    # check whether there's another logfile - in log directory
-    # make efl_triggers version of it, too.
-    filename='log/framelog.pkl'
-    logdir=os.path.dirname(filename)
-    
-    if __name__ != "__main__":
-        logdir = os.path.join(os.path.dirname(os.path.realpath(__file__)),logdir)
-    
-    logbasename, ext = os.path.splitext(os.path.basename(filename))
-    
-       
-    # figure out if there's a log directory, if not --> make it:
-    if not os.path.exists(logdir):
-        os.makedirs(logdir)
-    
-    # figure out which files reside within this logfile directory:
-    if len(glob.glob(logdir + os.sep + logbasename + "*" + ext)) == 0:
-        logcounter=0
-    else:
-        # figure out biggest number:
-        matches=[match for match in [re.match(logbasename+'([0-9]*)'+ext,item) for item in os.listdir(logdir)]]
-        newlist=[]
-        for match in matches:
-            if match is not None:
-                newlist.append(match.group(1))
-        logcounter = max([int(n) for n in newlist])
-    
-    # so make just another logfile on top of this one -- it'll be timestamped    
-    logcounter += 1
-    
-    # this is the new logfile:
-    newFrameLogFile=os.path.join(logdir,logbasename+'%d'%logcounter + ext )
-    
-    
-    
-    with open(newFrameLogFile,'wb') as f:
-        pickle.dump(G['win'].frameIntervals, f)
-        
-    print('written logfile regarding the frame intervals, too.')
-    
     win.flip()
 
 
 
-
-def measure_artifact_program(G):
-    
-    
-    
-    win=G['win']
-    eh=G['eh']
-    
-    cl=clock.Clock()
-    t1=visual.TextStim(win, 'Try to follow jumping/moving crosshair, without moving your head',pos=(0.0, 0.0), height=0.12,units='norm')
-    cl.reset()
-    while cl.getTime() < 4.0:
-        t1.draw()
-        win.flip()
-        
-    
-    a=visual.TextStim(win, '+',pos=(0.0, 0.0), height=0.12,units='norm')
-        
-    
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-
-
-    # do the saccades...
-    def move_a_fast(pos, msg, a):
-        a.pos=pos
-        cl.reset()
-        eh.send_message(msg)
-        while cl.getTime() < 2.2: #2.2:
-            a.draw()
-            win.flip()
-        
-        
-        # 'h4l','h4r','h8l','h8r','v4u','v4d','v8u','v8d', 'c', 'hvest','hvestp','vvest','vvestp','blinks','neck','jaw'
-
-    # horizontal...
-    positions = [(0, 0, 'c'), (-0.4, 0, 'h4l'), (0.4, 0, 'h4r'), (-0.4, 0, 'h4l'), (0.4, 0, 'h4r'), (-0.8, 0, 'h8l'), (0.8, 0, 'h8r'), (-0.8, 0, 'h8l'), (0.8, 0, 'h8r'), 
-                              (-0.4, 0, 'h4l'), (0.4, 0, 'h4r'), (-0.4, 0, 'h4l'), (0.4, 0, 'h4r'), (-0.8, 0, 'h8l'), (0.8, 0, 'h8r'), (-0.8, 0, 'h8l'), (0.8, 0, 'h8r'),
-                 (0, 0, 'c'), (0, -0.4, 'v4d'), (0, 0.4, 'v4u'), (0, -0.4, 'v4d'), (0, 0.4, 'v4u'), (0, -0.8, 'v8d'), (0, 0.8, 'v8u'), (0, -0.8, 'v8d'), (0, 0.8, 'v8u'), 
-                              (0, -0.4, 'v4d'), (0, 0.4, 'v4u'), (0, -0.4, 'v4d'), (0, 0.4, 'v4u'), (0, -0.8, 'v8d'), (0, 0.8, 'v8u'), (0, -0.8, 'v8d'), (0, 0.8, 'v8u'), ]
-                 
-    for p in positions:
-        x, y, msg = p
-        move_a_fast((x, y), msg, a)
-    
-    
-    
-    
-    def move_a_slow(b, e, msg, a):
-        # set pos a first..
-        a.pos=b
-        cl.reset()
-        eh.send_message(msg)
-
-        tmax = 3.0        
-        if msg == 'hvestp' or msg == 'vvestp':
-            tmax = 1.5
-
-        currentTime=0.0
-        while currentTime < tmax:
-            currentTime=cl.getTime()
-            
-            totx = e[0] - b[0]
-            toty = e[1] - b[1]
-            
-            dx = b[0] + currentTime / tmax * totx
-            dy = b[1] + currentTime / tmax * toty
-            
-            a.pos = (dx, dy)
-            a.draw()
-            win.flip()
-        
-        
-    # do the vestibulo stuff.
-    slow_positions = [[(0, 0), (-0.8, 0), 'hvestp'], [(-0.8, 0), (0.8, 0), 'hvest'], [(0.8, 0), (-0.8, 0), 'hvest'], [(-0.8, 0), (0.8, 0), 'hvest'], [(0.8, 0), (0, 0), 'hvestp'],
-                      [(0, 0), (0, -0.8), 'vvestp'], [(0, -0.8), (0, 0.8), 'vvest'], [(0, 0.8), (0, -0.8), 'vvest'], [(0, -0.8), (0, 0.8), 'vvest'], [(0, 0.8), (0, 0), 'vvestp'],
-                      ]
-
-    for sp in slow_positions:
-        b, e, msg = sp
-        move_a_slow(b, e, msg, a)
-
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-                      
-    # ask for eye blinks...
-    t2=visual.TextStim(win, 'Blink 10 times (keep eyes on cross), ~ 1 second between blinks',pos=(0.0, 0.4), height=0.08,units='norm')
-    a.pos=(0, 0)
-    cl.reset()
-    eh.send_message('eyeblinks')
-    while cl.getTime() < 12.0:
-        a.draw()
-        t2.draw()
-        win.flip()
-        
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-        
-
-        
-    
-    # ask for tense of neck muchles
-    t3=visual.TextStim(win, 'Tense your neck muscles (left) (4 seconds)',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('neckl')
-    while cl.getTime() < 4.0:
-        t3.draw()
-        win.flip()
-        
-    
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-        
-
-    # ask for tense of neck muchles
-    t4=visual.TextStim(win, 'Tense your neck muscles (right) (4 seconds)',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('neckr')
-    while cl.getTime() < 4.0:
-        t4.draw()
-        win.flip()
-        
-        
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-        
-    # ask for tense of neck muchles
-    t5=visual.TextStim(win, 'Tense your jaw muscles (clench teeth) (4 seconds)',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('jaw')
-    while cl.getTime() < 3.5:
-        t5.draw()
-        win.flip()
-
-    
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-
-    # ask for tense of neck muchles
-    t6=visual.TextStim(win, 'Frown your eyebrows (4 seconds)',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('eyebrows')
-    while cl.getTime() < 4.0:
-        t6.draw()
-        win.flip()
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-        
-        
-    # ask for tense of neck muchles
-    t7=visual.TextStim(win, 'Swallow movement (once)..',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('swallow')
-    while cl.getTime() < 3.0:
-        t7.draw()
-        win.flip()        
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-        
-        
-    # ask for tense of neck muchles
-    t8=visual.TextStim(win, 'Tense muscles in cheeks (4 seconds)...',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    eh.send_message('cheeks')
-    while cl.getTime() < 3.3:
-        t8.draw()
-        win.flip()        
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-
-
-        
-    # ask for tense of neck muchles
-    t9=visual.TextStim(win, 'Thank you, we continue with main experiment!',pos=(0.0, 0.0), height=0.08,units='norm')
-    cl.reset()
-    while cl.getTime() < 3.5:
-        t9.draw()
-        win.flip()
-        
-
-    cl.reset()
-    while cl.getTime() < 1.5:
-        win.flip()
-
-
-
-
-
-
-
-
-
 #%% Separate subroutine to start up the event handler:
-    
-    
     
 def start_ev(G):
     
@@ -2644,9 +1919,7 @@ if __name__== "__main__":
     # working space. This is horrible for programming, but fantastic for our
     # purposes of just running a script completely.
     # from efl.efl_v6 import *
-        # close the window, if it was open:
-    if visual.globalVars.currWindow:
-        visual.globalVars.currWindow.close()
+    
     
 
     G=init_G()
@@ -2672,37 +1945,22 @@ if __name__== "__main__":
     try:
         
         # print(G['eh'].is_alive())
-        wait_for_key(G)
         
-        #measure_artifact_program(G)
-                
-        # test_buttons(G)
-        # instr_screen0(G)
-        
-        eo_stim(G)
-        #ec_stim(G)
+        test_buttons(G)
         logging.flush()
-
-        
-        #test_buttons(G)
-        #instr_screen(G)
-        #logging.flush()
         
     
         # print(G['eh'].is_alive())
         # print('----><----')
         # G['eh'].send_message('boe!')
         # print('----><----')
-        # run_main_loop(G)
+        run_main_loop(G)
         logging.flush()
     
-        #eo_stim(G)
-        #ec_stim(G)
-        #end_task(G)
-        #logging.flush()
+        ec_stim(G)
+        logging.flush()
         
-        # write it away...
-
+        
         # close window here.
         G['win'].close()
         logging.flush()
