@@ -1,0 +1,16 @@
+1. Dual-boot of Manjaro/Linux + Windows
+2. downgrade/download from Internet Archives MESA and libglvnd; ignore these in pacman.conf
+mesa-18.0.3-4-x86_64.pkg.tar.xz
+and
+lib32-libglvnd-1.1.1-1-x86_64.pkg.tar.xz
+there's one  more package to downgrade, too
+
+Install swig, and also install sdsl_mixer - these packages are needed but conda doesn't say they are.
+
+Then install the conda environment using the environment file.
+Use (only?) the Miniconda3-4.7.12-Linux-x86_64.sh installer, otherwise the environment file doesn't make sense to conda anymore
+
+
+# I'd suggest to use the environment .yml file, otherwise... getting pygame to work, or pyo to work, is espacially hard. wxpython also gives troubles
+
+

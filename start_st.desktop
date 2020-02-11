@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=start_st
+Comment=
+Exec=bash -c "/home/nfcontrol/nf/nf-stim/start_st.sh"
+Icon=
+Path=/home/nfcontrol/nf/nf-stim
+Terminal=true
+StartupNotify=false
