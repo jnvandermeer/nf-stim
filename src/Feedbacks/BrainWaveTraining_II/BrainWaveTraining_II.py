@@ -466,7 +466,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.G['eh'].shutdown()
         self.G['eh'].join()
         
-        finish_text(self.G)
+        finish_text(self.G, self.st)
         self.G['logging'].flush()
         self.G['win'].close()
 
