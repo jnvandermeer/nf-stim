@@ -96,7 +96,7 @@ def starting_text(G, text):
                 
                 
                 
-def finish_text(G):
+def finish_text(G, st):
     event.clearEvents()
     win=G['win']
     # eh=G['eh']
