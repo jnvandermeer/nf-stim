@@ -82,8 +82,6 @@ def init_G():  # so we do this ourselves in the pyff framework:
         
         
         v['STARTKEYS'] = ['return','t']
-        v['STARTMRIKEYS'] = ['5']
-        
         v['MONITOR_PIXWIDTH']=1280
         v['MONITOR_PIXHEIGHT']=1024
         v['MONITOR_WIDTH']=40.  # width of screen
@@ -114,22 +112,16 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['DO_AUDIO'] = True
         v['DO_GNG'] = True
         v['GNGSPEED'] = 1.0
-        v['GNG_ARROWISALWAYSRED'] = True
-        v['GNG_ARROWGOESRED'] = True
-        v['GNG_ARROWGOESRED_DELAY'] = 0.005
-        v['GNG_SELECT_NUMBER'] = 0  # if it's a 0 -- then select randomly.        
+        v['GNG_ARROWGOESRED'] = False
+        v['GNG_ARROWGOESRED_DELAY'] = 0.25
         v['AUDIOTONE_ERROR_COMMISSION'] = False
-        v['AUDIOTONE_STOP'] = False
+        v['AUDIOTONE_STOP'] = True
         v['VIS_SHOWOPPOSITE'] = False
         v['VIS_radialFreq']=6
         v['VIS_angleFreq']=6
         v['VIS_checkerSize']=1.5
         v['VIS_checkerSpeedMultiplier']=1.0
-        v['EYESCLOSED_TIME']=120.
-        
-        v['EX_EV_IGNORE_KEYS']=['5','t']
-        
-        
+        v['EYESCLOSED_TIME']=25.
         
         v['EVENT_destip']='127.0.0.1'
         v['EVENT_destport']=6050
@@ -491,11 +483,11 @@ def init_stimuli(G):
                   (0, 1),(0, 0.7071/arrowPinch), 
                   (-0.7071, 0.7071/arrowPinch)]
     
-    arrowl = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkgreen', 
-                             size=stimSize/1.973, ori=180, lineColor='darkgreen', autoLog=AUTOLOGIT)
+    arrowl = visual.ShapeStim(win, vertices=arrowVert, fillColor='white', 
+                             size=stimSize/1.973, ori=180, lineColor='white', autoLog=AUTOLOGIT)
     
-    arrowr = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkgreen', 
-                             size=stimSize/1.973, ori=0, lineColor='darkgreen', autoLog=AUTOLOGIT)
+    arrowr = visual.ShapeStim(win, vertices=arrowVert, fillColor='white', 
+                             size=stimSize/1.973, ori=0, lineColor='white', autoLog=AUTOLOGIT)
     
     arrowlr = visual.ShapeStim(win, vertices=arrowVert, fillColor='darkred', 
                              size=stimSize/1.973, ori=180, lineColor='darkred', autoLog=AUTOLOGIT)
@@ -719,7 +711,6 @@ def init_gng(G):
     tooSoonTime=G['v']['tooSoonTime']
     AUDIOTONE_ERROR_COMMISSION=G['v']['AUDIOTONE_ERROR_COMMISSION']
     AUDIOTONE_STOP=G['v']['AUDIOTONE_STOP']
-    GNG_SELECT_NUMBER=G['v']['GNG_SELECT_NUMBER']
     
     
     G['S']=dict()
@@ -755,12 +746,7 @@ def init_gng(G):
     # Obtain the Go Nogo Timing Parameters
     # for stop-signal task: read in the critucal timings from one of my 500 
     # OPTIMAL GLM Design specifications:
-    
-    if GNG_SELECT_NUMBER == 0:
-        tmp_rand_number = random.randint(1,193)
-    else:
-        tmp_rand_number = int(GNG_SELECT_NUMBER)  # shameless typecasting.
-    
+    tmp_rand_number = random.randint(1,193)
     
     
     timingsfile='gngtimings/newparam_%d.txt' % tmp_rand_number
@@ -851,9 +837,6 @@ def handle_gonogo(G):
  
     GNG_ARROWGOESRED=G['v']['GNG_ARROWGOESRED']
     GNG_ARROWGOESRED_DELAY=G['v']['GNG_ARROWGOESRED_DELAY']
-    GNG_ARROWISALWAYSRED=G['v']['GNG_ARROWISALWAYSRED']
-    EX_EV_IGNORE_KEYS=G['v']['EX_EV_IGNORE_KEYS']
-    
     BUTTONS=G['S']['BUTTONS']
     snd_stopsignal=G['S']['snd_stopsignal']
     # we just need it here...
@@ -966,13 +949,7 @@ def handle_gonogo(G):
             G['S']['goNogoStim']=G['vstims']['S']['pre']
             while cl.getTime() < 0.5 * GNGSPEED:
                 
-                # event.getKeys(keyList=[SCANNER_KEY])  # get out the scanner keys, if it's there...
                 evs=event.getKeys(timeStamped=cl)
-                # so remove all the MRI_Keys from this? - that should be OK. No other buttons should be pressed anyway.
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]  # named tuple unpacking, in a list comprehension, and conditional. ... and.. READABLE.
-
-                
-                
                 # check if they press too SOON:
                 if len(evs)>0 and not responded:
                     buttonsPressed, timesPressed = zip(*evs)
@@ -1034,15 +1011,6 @@ def handle_gonogo(G):
             reactionTime = None
             ShowFix=False
             event.clearEvents()
-            
-            
-            
-            if thisTrialType is STOP and GNG_ARROWISALWAYSRED:
-                G['S']['goNogoStim']=G['vstims']['S'][thisDirection+'r']
-            
-            
-            
-            
             while currentTime < 1.0 * GNGSPEED:
                 currentTime = cl.getTime()
                 
@@ -1050,7 +1018,6 @@ def handle_gonogo(G):
                 # make the arrow (+ circle)
     
                 evs=event.getKeys(timeStamped=cl)
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]
                 
                 
                 if len(evs)>0:
@@ -1218,7 +1185,6 @@ def handle_gonogo(G):
                     flushed=True
                     
                 evs=event.getKeys(timeStamped=cl)
-                evs=[(key, time) for (key, time) in evs if key not in EX_EV_IGNORE_KEYS]
                                 # do this anyway.
                 if len(evs)>0:
                     buttonsPressed, timesPressed = zip(*evs)
@@ -1387,236 +1353,6 @@ def init_audio(G):
     return(G)
 
 
-
-
-
-
-@asyncio.coroutine
-def handle_visual_contents(G):
-    '''
-    This should handle the CONTENTS of the visual stimuli, and store them in G['V']['contents']
-    This will ensire that visual contents are time-derived instead of frame-derived. Had to go this
-    way due to some high-performance graphics cards which can work much faster than a screen can 
-    update itself.
-    
-    Markers should be managed here, too.
-    
-    '''
-    
-    
-    print('handle_vis_contents has started')
-    
-    win=G['win']
-    
-    
-    DO_VISUAL = G['v']['DO_VISUAL']
-    
-    visual_stim_list = [
-            [17.5,35.,'left','8'],
-            [135.,145.,'left','8'],
-            [280.,290.,'left','8'],
-            [87.5,105.,'left','13'],
-            [217.5,235.,'left','13'],
-            [320.,330.,'left','13'],
-            [52.5,70.,'right','8'],
-            [155.,165.,'right','8'],
-            [300.,310.,'right','8'],
-            [115.,125.,'right','13'],
-            [182.5,200.,'right','13'],
-            [252.5,270.,'right','13']
-            ]
-    
-    visdict={i[0]: i for i in visual_stim_list}
-    
-    times = [i[0] for i in visual_stim_list]
-    times.sort()
-    times.append(340. + 1000.)  # some insanely high number that'll never be reached!
-                                # a thousand deaths for this dirty hack. 
-    nextTime=times.pop(0)
-    
-    VIS_checkerSpeedMultiplier=G['v']['VIS_checkerSpeedMultiplier']
-    
-    vis_times={'8':[x * 1./VIS_checkerSpeedMultiplier for x in [0.111, 0.253,0.373,0.475, 0.600]],'13':[x * 1./VIS_checkerSpeedMultiplier for x in [0.078,0.151,0.214,0.300,0.376,0.442,0.525,0.600]]}
-    
-    
-    #audio_stim_list =  G['A']['audio_stim_list']
-    #astims = G['astims']
-    eh=G['eh']
-
-    # DO_AUDIO = G['v']['DO_AUDIO']
-    tmpvstimsllabels=['l', 'lf']
-    tmpvstimsrlables=['r', 'rf']
-    
-    visualClock=clock.Clock()
-    playing=False
-    doseq=False
-    # withinVisualBlock=False
-    # prevWithinVisualBlock=False
-    # RunAudio=True
-    playClock=clock.Clock()
-    
-    currentTime=visualClock.getTime()
-    
-    G['vstims']['V']['current']=[[]]
-    
-    # log the beginning...
-    
-    while currentTime < 340.: #currentTime < 340.:
-        
-
-        currentTime = visualClock.getTime()   
-        # print('hello')
-        # print(currentTime)
-        
-        if not playing:     # I can safely use this since only one audio is playing at a time.
-
-
-            # simply, prevent unpacking all the time for EACH screen flip = faster.
-            if currentTime > nextTime:
-            
-                b, e, side, freq = visdict[nextTime]
-
-                nextTime=times.pop(0)
-                    
-                if b < currentTime < e:
-                    
-                    #print('--------------------------> Commencing Playing Visual')
-                    #print('--------> CAN I ENTER HERE??')
-                    #print(currentTime)
-                    #print(side)
-                    #print(freq)
-                    # currentStim = vis_times[freq]
-                    # withinVisualBlock=True
-                    #astims[stim].play()
-                    
-                    vis_times_position = 0
-                    vis_times_position_limit = len(vis_times[freq])
-                    
-                    # playDuration=max(vis_times[freq])
-                    playing=True
-                    playClock.reset()
-                    doseq = True
-                    vis_times_position=0
-                    
-                    
-                    currentSide = side
-                    currentFreq = freq
-                    currentVisTimes = vis_times[freq]
-                    currentVisTimesLength = len(vis_times[freq])
-                    currentEndingTime = e
-                    
-
-                    # sending messages:
-                    if DO_VISUAL:
-                        msg = 'vis_' + 'b' + currentSide[0] + freq
-                        win.callOnFlip(eh.send_message,msg)
-                        logging.data(msg)
-
-
-                    
-        if doseq:
-            
-            playTime = playClock.getTime()
-            if playTime > currentVisTimes[vis_times_position] and vis_times_position < vis_times_position_limit:
-                #print('--------> CAN I ENTER HERE??')
-                #print(currentSide)
-                #print(currentFreq)
-                # print(side)
-                vis_times_position += 1
-                #print(vis_times_position)
-                if currentSide == 'left':
-                    tmpvstimsllabels=tmpvstimsllabels[::-1]
-                elif currentSide == 'right':
-                    tmpvstimsrlables=tmpvstimsrlables[::-1]                    
-    
-                if DO_VISUAL: 
-
-                    msg = 'vis_'+ currentSide[0] + currentFreq
-                    
-                    # print(msg)
-                    win.callOnFlip(eh.send_message,msg)
-                    logging.data(msg)
-                    
-                    
-                if playing:
-                    # set up what's in this list:                    
-                    if G['v']['VIS_SHOWOPPOSITE'] is False:
-                        if currentSide == 'left':
-                            G['vstims']['V']['current'][0]=[tmpvstimsllabels[0]]
-                        if currentSide == 'right':
-                            G['vstims']['V']['current'][0]=[tmpvstimsrlables[0]]
-                    else:
-                        G['vstims']['V']['current'][0]=[tmpvstimsllabels[0], tmpvstimsrlables[0]]
-                    
-                    
-            if vis_times_position == currentVisTimesLength:
-                #print('over here')
-                # reset it..
-                vis_times_position=0
-                playClock.reset()
-                if currentTime > currentEndingTime:
-                    doseq=False
-
-                
-
-            
-            
-            # print(G['vstims']['V']['current'][0])
-            if currentTime > currentEndingTime and doseq == False:  # figure out if something is playing 
-                playing=False
-                G['vstims']['V']['current']=[[]]
-                # print('--------------------------> Stopping Playing Visual')
-                if DO_VISUAL:
-                    msg = 'vis_' + 'e' + currentSide[0] + currentFreq
-                    #print(msg)
-                    #print(currentTime)
-                    win.callOnFlip(eh.send_message,msg)
-                    logging.data(msg)
-
-        # print(G['vstims']['V']['current'][0])
-        
-
-        # G['vstims']['V']['current'][0]=[tmpvstimsllabels[0], tmpvstimsrlables[0]]
-
-        yield From(asyncio.sleep(0))
-                
-        # try dealing with begin and ending markers:                    
-        #        if withinVisualBlock and not prevWithinVisualBlock:
-        #            messg=currentStim.replace('_','_b')
-        #            # print(messg)
-        #            logging.data(messg)
-        #            eh.send_message(messg)
-        #            prevWithinVisualBlock=True
-        #            
-        #        elif prevWithinVisualBlock and not withinVisualBlock:
-        #            messg=currentStim.replace('_','_e')
-        #            # print(messg)
-        #            logging.data(messg)
-        #            eh.send_message(messg)
-        #            prevWithinVisualBlock=False
-            
-        
-    # this will stop this loop, probably:
-    # currentTime=currentTime.getTime()
-    #if currentTime > 340.:
-    #    print('Stopping!')
-    #    RunAudio=False
-        
-    yield From(asyncio.sleep(0))  # pass control to someone else, while this guy sleeps a bit.
-  
-
-
-
-
-
-
-
-
-
-
-
-
-
 @asyncio.coroutine
 def handle_audio(G):
     '''
@@ -1638,7 +1374,7 @@ def handle_audio(G):
     withinAudioBlock=False
     prevWithinAudioBlock=False
     # RunAudio=True
-    playClock=clock.Clock()
+    
     
     currentTime=audioClock.getTime()
     
@@ -1667,7 +1403,7 @@ def handle_audio(G):
                         astims[stim].play()
                         playDuration=astims[stim].getDuration()
                         playing=True
-                        playClock.reset()
+                        playClock=clock.Clock()
                         
                         # print(stim)
                         logging.data(stim)
@@ -1771,18 +1507,6 @@ def handle_visual(G):
     run in the asyncio loop.
     '''
     
-    # set blank...
-    G['vstims']['V']['current'] = [[]]
-    
-    
-    # start (!!) the ehm, visual 'contents' handler:
-    loop=G['loop']
-    
-    # this adds another task to an already running loop. in this case -- figuring out the visuals.
-    # hope it works well.
-    loop.create_task(handle_exception(handle_visual_contents, G, loop))
-    yield From(asyncio.sleep(0))
-    
     # logging.console.setLevel(logging.DEBUG)
     # mainClock=G['mainClock']
     win=G['win']
@@ -1802,9 +1526,6 @@ def handle_visual(G):
 
     totFrames=len(fd_with_markers)
     print(totFrames)
-    
-    
-    visContents = G['vstims']['V']['current'][0]
 
     # visualClock=clock.Clock()
     # this will run the entire length of the visual...
@@ -1814,15 +1535,10 @@ def handle_visual(G):
     if DO_VISUAL:
         eh.send_message('vis_BEGIN')
     
-    vis_time=0
-    vis_clock=clock.Clock()
+    # the visual task...
+    while frameCounter < totFrames:
     
     
-    # the visual task... here we'd need to use time infomration instead..
-    while vis_time < 340.0:
-    
-        visContents = G['vstims']['V']['current'][0]
-        vis_time = vis_clock.getTime()
         # the workflow
         # 1) Prepare everything + draw
         # 2) Prepare markers
@@ -1830,7 +1546,10 @@ def handle_visual(G):
     
         
         # all the visual stuff:
-        # frameIndex, visContents, markers = fd_with_markers[frameCounter]
+        frameIndex, visContents, markers = fd_with_markers[frameCounter]
+        
+        
+        
         
         frameCounter += 1
         # deal with the visuals -- using vstims which should be accessible
@@ -1839,7 +1558,6 @@ def handle_visual(G):
         
         shapes=[]
         
-        # this handles the checkerboard.
         if DO_VISUAL:
             if len(visContents) > 0:
                 for item in visContents:
@@ -1872,10 +1590,10 @@ def handle_visual(G):
 
         # prepare the calls for the next iteration, including marlers;
         # deal with visual markers
-        #if DO_VISUAL:
-        #    if len(markers) > 0:
-        #        for marker in markers:
-        #            win.callOnFlip(eh.send_message,'vis_'+marker)
+        if DO_VISUAL:
+            if len(markers) > 0:
+                for marker in markers:
+                    win.callOnFlip(eh.send_message,'vis_'+marker)
                     # win.callOnFlip(print,marker)
         
         
@@ -2022,8 +1740,6 @@ def run_main_loop(G):
     
     loop=asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    
-    G['loop'] = loop  # store loop in G, too.
     #tasks = [
     #    asyncio.async(handleVisual()),
     #    asyncio.async(handleGonogo()),
@@ -2084,39 +1800,6 @@ def wait_for_key(G):
                 incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
                 drawIncorrect=True
                 incor_clock.reset()
-                
-                
-                
-def wait_for_mri(G):
-    event.clearEvents()
-    win=G['win']
-    eh=G['eh']
-    
-    testinstr=visual.TextStim(win, 'Waiting for Start...',pos=(0, 0), units='norm')
-    incor_clock=clock.Clock()
-    correctlyPressed=False
-    drawIncorrect=False
-    
-    while not correctlyPressed:
-        testinstr.draw()
-        if drawIncorrect is True and incor_clock.getTime() < 1.0:
-            incorr_str.draw()
-        else:
-            drawIncorrect=False
-        win.flip()
-
-                
-        evs=event.getKeys(timeStamped=incor_clock)
-        if len(evs) > 0:
-            buttonsPressed, timesPressed = zip(*evs)
-            buttonPressed=buttonsPressed[0]
-            if buttonsPressed[0] in G['v']['STARTMRIKEYS']:
-                correctlyPressed=True
-            else:
-                INCORRECT_TEXT='One moment of patience..  (You pressed: %s)' % (buttonPressed)
-                incorr_str = visual.TextStim(win, INCORRECT_TEXT,pos=(0, -0.5), units='norm')
-                drawIncorrect=True
-                incor_clock.reset()                
                         
     
 def test_buttons(G):
@@ -2174,13 +1857,13 @@ def instr_screen0(G):
     INSTR=G['v']['INSTR']
     eh=G['eh']
 
-    fstim=visual.TextStim(win, 'Relax and watch the crosshair.',pos=(0.0, 0.0), height=0.12, units='norm')
+    fstim=visual.TextStim(win, 'Please keep your fingers on the buttons throughout the experiment.',pos=(0.0, 0.0), height=0.12, units='norm')
     # fstim=visual.TextStim(win, 'Press to continue with Eyes Open / Eyes Closed...',pos=(0.0, 0.0), height=0.12, units='norm')
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
     contstim2=visual.TextStim(win, 'with Eyes Open / Eyes Closed...',pos=(0.0, 0.81), height=0.08, units='norm')
     fstim.draw()
     contstim.draw()
-    #contstim2.draw()
+    contstim2.draw()
     win.flip()
     event.waitKeys()
         
@@ -2219,7 +1902,7 @@ def eo_stim(G):
     eh=G['eh']
     incor_clock=clock.Clock()
     contstim=visual.TextStim(win, 'Press to continue...',pos=(0.0, 0.90), height=0.08, units='norm')
-    ecstim = visual.TextStim(win, '+',pos=(0.0, 0.0), height=0.12, units='norm')
+    ecstim = visual.TextStim(win, 'Eyes open',pos=(0.0, 0.0), height=0.12, units='norm')
     
 
     ecstim.draw()
@@ -2644,9 +2327,7 @@ if __name__== "__main__":
     # working space. This is horrible for programming, but fantastic for our
     # purposes of just running a script completely.
     # from efl.efl_v6 import *
-        # close the window, if it was open:
-    if visual.globalVars.currWindow:
-        visual.globalVars.currWindow.close()
+    
     
 
     G=init_G()
@@ -2674,32 +2355,32 @@ if __name__== "__main__":
         # print(G['eh'].is_alive())
         wait_for_key(G)
         
-        #measure_artifact_program(G)
+        measure_artifact_program(G)
                 
-        # test_buttons(G)
-        # instr_screen0(G)
+        test_buttons(G)
+        instr_screen0(G)
         
         eo_stim(G)
-        #ec_stim(G)
+        ec_stim(G)
         logging.flush()
 
         
-        #test_buttons(G)
-        #instr_screen(G)
-        #logging.flush()
+        test_buttons(G)
+        instr_screen(G)
+        logging.flush()
         
     
         # print(G['eh'].is_alive())
         # print('----><----')
         # G['eh'].send_message('boe!')
         # print('----><----')
-        # run_main_loop(G)
+        run_main_loop(G)
         logging.flush()
     
-        #eo_stim(G)
-        #ec_stim(G)
-        #end_task(G)
-        #logging.flush()
+        eo_stim(G)
+        ec_stim(G)
+        end_task(G)
+        logging.flush()
         
         # write it away...
 

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=start wifi ap
+Comment=
+Exec=bash -c "/home/nfcontrol/scripts/start-ap.sh"
+Icon=
+Terminal=true
+StartupNotify=false
+Path=/home/nfcontrol/scripts

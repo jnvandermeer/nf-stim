@@ -15,11 +15,11 @@ from psychopy import locale_setup, sound, gui, visual, core, data, event, loggin
 
 
 # some helpers:
-from Feedbacks.RestingState.efl import eventhandler
-from Feedbacks.RestingState.efl import visualHelper
+from Feedbacks.EOEC.efl import eventhandler
+from Feedbacks.EOEC.efl import visualHelper
 
 # the actual experiment:
-from Feedbacks.RestingState.efl.efl_v12 import * 
+from Feedbacks.EOEC.efl.efl_v12 import * 
 
 
 
@@ -30,7 +30,7 @@ from FeedbackBase.MostBasicPsychopyFeedback import MostBasicPsychopyFeedback
 # introduced by trying to get around writing them." (PEP20).
 
 
-class RestingState(MostBasicPsychopyFeedback):
+class EOEC(MostBasicPsychopyFeedback):
     
     # constants to be used throughout the DEFs.
     # TRIGGER VALUES FOR THE PARALLEL PORT (MARKERS)
@@ -89,7 +89,7 @@ class RestingState(MostBasicPsychopyFeedback):
         self.VIS_angleFreq=6
         self.VIS_checkerSize=1.5
         self.VIS_checkerSpeedMultiplier=1.0
-        self.EYESCLOSED_TIME=120.
+        self.EYESCLOSED_TIME=20.
         
         
         
@@ -104,7 +104,7 @@ class RestingState(MostBasicPsychopyFeedback):
         self.EVENT_printToTerminal=True
         self.EVENT_printToTerminalAllowed=[0, 256]  # only allow the stops, which are < 40.
         
-        self.INSTR='Relax and watch the crosshair.'
+        self.INSTR='Open and close your eyes as instructed on the screen.'
 
         
         
@@ -280,11 +280,17 @@ class RestingState(MostBasicPsychopyFeedback):
         try:
             
             wait_for_key(G)
-            # wait_for_key(G)
+            
+            
+            # test_buttons(G)
             instr_screen(G)
             logging.flush()
+            # wait_for_key(G)
             wait_for_mri(G)
-
+            eo_stim(G)
+            ec_stim(G)
+            eo_stim(G)
+            ec_stim(G)
             eo_stim(G)
             # print(G['eh'].is_alive())
             # print('----><----')
