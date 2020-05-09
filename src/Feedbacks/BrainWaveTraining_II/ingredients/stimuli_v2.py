@@ -47,7 +47,7 @@ else:
 
 
 
-#%% He[per functions
+#%% Helper functions
 def flatten(lst):
     new_lst = []
     flatten_helper(lst, new_lst)
@@ -96,7 +96,7 @@ def starting_text(G, text):
                 
                 
                 
-def finish_text(G):
+def finish_text(G, st):
     event.clearEvents()
     win=G['win']
     # eh=G['eh']
@@ -129,7 +129,33 @@ def finish_text(G):
                 incor_clock.reset()
                 
                 
-                
+
+
+
+def get_size(obj, seen=None):
+    """Recursively finds size of objects"""
+
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+
+    if isinstance(obj, dict):
+        size += sum([get_size(v, seen) for v in obj.values()])
+        size += sum([get_size(k, seen) for k in obj.keys()])
+    elif hasattr(obj, '__dict__'):
+        size += get_size(obj.__dict__, seen)
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (file, str, bytes, bytearray)):
+        size += sum([get_size(i, seen) for i in obj])
+
+    return size                
                 
                 
 
@@ -141,6 +167,13 @@ def init_G_and_CP():  # so we do this ourselves in the pyff framework:
 
         v=dict()
 
+        v['EX_HANDLE_EXCEPTIONS'] = True        # handle exceptions - crash loop, or continue (crashing == higher overhead?)
+        v['EX_DO_EMG'] = True                   # do the EMG stimuli + program -- or just ignore them!
+        v['EX_LOGLEVEL'] = 'WARNING'
+        v['EX_MAKE_FEEDBACK_VOXEL'] = False
+        v['EX_MAKE_FEEDBACK_VOXEL_SIZE'] = 0.05
+        v['EX_MAKE_FEEDBACK_VOXEL_SCALING'] = 1.0
+        v['EX_MAKE_FEEDBACK_VOXEL_OFFSET'] = 0.0
         
         v['EX_TINSTR']  = 2.0
         v['EX_TPAUSE']  = 0.5
@@ -406,7 +439,7 @@ def make_stimuli(G, CP):
     for i, t in enumerate(ypos):
         nf_vertices.append((xpos[i], ypos[i]))
     
-    nf_line = visual.ShapeStim(win, vertices=nf_vertices, closeShape=False, lineColor='lightblue')
+    nf_line = visual.ShapeStim(win, vertices=nf_vertices, closeShape=False, lineColor='lightblue', autoLog=False)
     
     
     
@@ -461,6 +494,11 @@ def make_stimuli(G, CP):
     st['patches'] = []   # this will grow throoughout the experiment -- these are 'patches'...
     st['st_txt_upregulate']=st_txt_upregulate
     st['st_txt_noregulate']=st_txt_noregulate
+
+    # make the voxel...
+    if G['EX_MAKE_FEEDBACK_VOXEL']:
+        st_voxel = visual.Rect(win, pos=(0.95, 0.95), width=G['EX_MAKE_FEEDBACK_VOXEL_SIZE'], height=G['EX_MAKE_FEEDBACK_VOXEL_SIZE'],fillColor=[1,0,-1],lineWidth=0)
+        st['voxel']=st_voxel
 
 
     # set these for now, since we use these later on. Use control parameters to choose which one.
@@ -568,11 +606,11 @@ def make_stimuli(G, CP):
     tfactor=1.03
     
     # the EMG Feedback:    
-    st['emg_feedback_window'] = visual.Rect(G['win'], width=twidth*tfactor, height=theight*tfactor, pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                fillColor=[0, 0, 0],  lineColor=[1,1,1])
-    st['emg_feedback']        = visual.Rect(G['win'], width=twidth,         height=theight,         pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                 fillColor=[0.5,-0.5,-0.5], lineColor=[-0.8,-0,-0.1], lineWidth=0)
+    st['emg_feedback_window'] = visual.Rect(G['win'], width=twidth*tfactor, height=theight*tfactor, pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                fillColor=[0, 0, 0],  lineColor=[1,1,1], autoLog=False)
+    st['emg_feedback']        = visual.Rect(G['win'], width=twidth,         height=theight,         pos=(-1+tedge+0.5*twidth, -1+tedge+0.5*theight),                 fillColor=[0.5,-0.5,-0.5], lineColor=[-0.8,-0,-0.1], lineWidth=0, autoLog=False)
     
     EMG_THR_FACTOR=0.2
-    st['emg_feedback_thresh'] = visual.Line(G['win'], start=(-1+tedge+0.5*twidth - twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), end=(-1+tedge+0.5*twidth+twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), lineWidth=G['EX_THRLINEWIDTH'])
+    st['emg_feedback_thresh'] = visual.Line(G['win'], start=(-1+tedge+0.5*twidth - twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), end=(-1+tedge+0.5*twidth+twidth/2.0,  -1+tedge+EMG_THR_FACTOR*theight), lineWidth=G['EX_THRLINEWIDTH'], autoLog=False)
     
     
     # and the Counter:
@@ -963,41 +1001,42 @@ def define_experiment(G, st, pr, CP):
     TMARK=G['EX_TMARK']  
     # TJITT=G['TJITT']  
     
-    
+
     
     # for each trial type, show what's going the be on the screen...
     ex['line']['train']['sequence']             = ['instruction', 'pause', 'feedback', 'veryshortpause1', 'jitterpause' ]
-    ex['line']['train']['instruction']          = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                             ['instruction','itrain'], [])
-    ex['line']['train']['pause']                = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                                            [], [])
-    ex['line']['train']['feedback']             = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB+4.0,     [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],    ['bFB','btrain'], ['eFB','etrain'])
-    ex['line']['train']['veryshortpause1']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
-    ex['line']['train']['veryshortpause2']      = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['train']['mark']                 = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV','xorvtrain'], [])
-    ex['line']['train']['jitterpause']          = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisitrain'], ['eISI','eisitrain'])
+    ex['line']['train']['instruction']          = ([],                                  TINSTR,      [st['background'], st['crosshair'],st['counter']],                                                             ['instruction','itrain'], [])
+    ex['line']['train']['pause']                = ([pr['pickRandomJitter']],           TPAUSE,      [st['background'],st['counter'],st['instr_upregulate']],                                                            [], [])
+    ex['line']['train']['feedback']             = ([pr['HandleNFLine']],               TFB+4.0,     [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['counter'],st['instr_upregulate']],    ['bFB','btrain'], ['eFB','etrain'])
+    ex['line']['train']['veryshortpause1']      = ([],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'],  st['counter']],    [], [])
+    ex['line']['train']['veryshortpause2']      = ([],                                  TVSP,        [st['background'], st['crosshair'],st['counter']],                                                            [], [])
+    ex['line']['train']['mark']                 = ([],                                  TMARK,       [st['background'], CP['corr_incorr']],                                      ['XorV','xorvtrain'], [])
+    ex['line']['train']['jitterpause']          = ([],                                  CP['TJITT'], [st['background'], st['crosshair'],st['counter']],                                                            ['bISI','bisitrain'], ['eISI','eisitrain'])
     
     
     ex['line']['transfer']['sequence']          = ['instruction', 'pause', 'feedback', 'veryshortpause', 'jitterpause' ]
-    ex['line']['transfer']['instruction']       = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                   ['instruction','itransfer'], [])
-    ex['line']['transfer']['pause']             = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                                            [], [])
-    ex['line']['transfer']['feedback']          = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh'], st['instr_upregulate']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
-    ex['line']['transfer']['veryshortpause']    = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['thrline'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['transfer']['mark']              = ([pr['HandleEMGLine']],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV', 'xorvtransfer'], [])
-    ex['line']['transfer']['jitterpause']       = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisitransfer'], ['eISI','eisitransfer'])
+    ex['line']['transfer']['instruction']       = ([],                                  TINSTR,      [st['background'], st['crosshair'],st['counter']],                                   ['instruction','itransfer'], [])
+    ex['line']['transfer']['pause']             = ([pr['pickRandomJitter']],           TPAUSE,      [st['background'],st['counter'],st['instr_upregulate']],                                                            [], [])
+    ex['line']['transfer']['feedback']          = ([pr['HandleNFLine']],               TFB,         [st['background'], st['thrline'], st['counter'],st['instr_upregulate']],                                             ['bFB','btransfer'], ['eFB','etransfer'])
+    ex['line']['transfer']['veryshortpause']    = ([],                                  TVSP,        [st['background'], st['thrline'], st['counter']],                                                            [], [])
+    ex['line']['transfer']['mark']              = ([],                                  TMARK,       [st['background'], CP['corr_incorr']],                                         ['XorV', 'xorvtransfer'], [])
+    ex['line']['transfer']['jitterpause']       = ([],                                  CP['TJITT'], [st['background'], st['crosshair'],st['counter']],                                                            ['bISI','bisitransfer'], ['eISI','eisitransfer'])
     
     
     ex['line']['observe']['sequence']           = ['instruction', 'pause', 'feedback', 'veryshortpause', 'jitterpause' ]
-    ex['line']['observe']['instruction']        = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                   ['instruction','iobserve'], [])
-    ex['line']['observe']['pause']              = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            [], [])
-    ex['line']['observe']['feedback']           = ([pr['HandleEMGLine'],pr['HandleNFLine']],               TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    ['bFB','bobserve'], ['eFB','eobserve'])
-    ex['line']['observe']['veryshortpause']     = ([pr['HandleEMGLine']],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['emg_feedback_window'], st['emg_feedback'],st['counter'], st['emg_feedback_thresh']],    [], [])
-    ex['line']['observe']['jitterpause']        = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisiobserve'], ['eISI','eisiobserve'])
+    ex['line']['observe']['instruction']        = ([],                                  TINSTR,      [st['background'], st['crosshair'],st['counter']],                                   ['instruction','iobserve'], [])
+    ex['line']['observe']['pause']              = ([pr['pickRandomJitter']],           TPAUSE,      [st['background'],st['counter']],                                                            [], [])
+    ex['line']['observe']['feedback']           = ([pr['HandleNFLine']],               TFB,         [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['counter']],    ['bFB','bobserve'], ['eFB','eobserve'])
+    ex['line']['observe']['veryshortpause']     = ([],                                  TVSP,        [st['background'], st['patches'], st['thrline'], st['nf_line'], st['cfb'], st['counter']],    [], [])
+    ex['line']['observe']['jitterpause']        = ([],                                  CP['TJITT'], [st['background'], st['crosshair'],st['counter']],                                                            ['bISI','bisiobserve'], ['eISI','eisiobserve'])
 
     
     ex['line']['rest']['sequence']              = ['instruction', 'pause', 'feedback', 'jitterpause' ]
-    ex['line']['rest']['instruction']           = ([pr['HandleEMGLine']],                                  TINSTR,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                   ['instruction','irest'], [])
-    ex['line']['rest']['pause']                 = ([pr['HandleEMGLine'],pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_rest']],                                                            [], [])
-    ex['line']['rest']['feedback']              = ([pr['HandleEMGLine']],                                  TFB,         [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh'], st['instr_rest']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
-    ex['line']['rest']['jitterpause']           = ([pr['HandleEMGLine']],                                  CP['TJITT'], [st['background'], st['crosshair'], st['emg_feedback_window'], st['emg_feedback'], st['counter'], st['emg_feedback_thresh']],                                                            ['bISI','bisirest'],['eISI','eisirest'])
+    ex['line']['rest']['instruction']           = ([],                                  TINSTR,      [st['background'], st['crosshair'],st['counter']],                                   ['instruction','irest'], [])
+    ex['line']['rest']['pause']                 = ([pr['pickRandomJitter']],           TPAUSE,      [st['background'], st['crosshair'],st['counter'],st['instr_rest']],                                                            [], [])
+    ex['line']['rest']['feedback']              = ([],                                  TFB,         [st['background'], st['crosshair'],st['counter'],st['instr_rest']],                                             ['bFB', 'brest'], ['eFB', 'erest'])
+    ex['line']['rest']['jitterpause']           = ([],                                  CP['TJITT'], [st['background'], st['crosshair'],st['counter']],                                                            ['bISI','bisirest'],['eISI','eisirest'])
+
 
 
     # we will just set the only thing to be different, which is the feedback, mostly...
@@ -1141,6 +1180,7 @@ def HandleNFLine(G, st, CP):
     nf_line = st['nf_line'][0]        # this is a shapestim
     patches = st['patches']           # this is a list of shapestims
     
+    
     trialType = CP['TrialType'][0] # -- we also don't use the trialtype, I don't think..
     # this_staircase = G['staircases'][trialtype]     # don't do staircase..
     # obtain next response from staircase
@@ -1277,7 +1317,7 @@ def HandleNFLine(G, st, CP):
             else:
                 
                 # G['eh'].send_message('e_nf_below')
-                G['eh'].send_message('nf_goingup')
+                # G['eh'].send_message('nf_goingup')
                 # G['eh'].send_message('b_nf_above')
                 patch_vert=[]
                 old_xpos = vertices[-2][0]
@@ -1308,7 +1348,7 @@ def HandleNFLine(G, st, CP):
             else:
                 
                 # G['eh'].send_message('e_nf_above')
-                G['eh'].send_message('nf_goingdown')
+                # G['eh'].send_message('nf_goingdown')
                 # G['eh'].send_message('b_nf_below')
                 
                 old_xpos = vertices[-2][0]
@@ -1334,8 +1374,8 @@ def HandleNFLine(G, st, CP):
         # popping it will empty the list...
         
         if len(hit)>0:
-            emg_level = CP['emgThrContainer']
-            emg_thr = CP['emgContainer']
+            # emg_level = CP['emgThrContainer']
+            # emg_thr = CP['emgContainer']
             
             # DO_FEEDBACK = emg_level < emg_thr
         
@@ -1401,6 +1441,26 @@ def HandleNFLine(G, st, CP):
                             
                     elif trialType == 'rest':
                         pass
+
+        # change color of the feedback voxel?
+        if G['EX_MAKE_FEEDBACK_VOXEL']:
+            # ypos is the actual feedback signal, see above...
+            vox_color_scaling = G['EX_MAKE_FEEDBACK_VOXEL_SCALING']
+            vox_color_offset = G['EX_MAKE_FEEDBACK_VOXEL_OFFSET']
+
+            # apply offset and scaling so we can put it better into range of the diode...
+            vox_color_val = ypos
+            vox_color_val += 1.0
+            vox_color_val /= 2.0
+            vox_color_val *= vox_color_scaling
+            vox_color_val *= 2.0
+            vox_color_val -= 1.0
+            vox_color_val += vox_color_offset
+
+            # from pudb import remote
+            # remote.set_trace(term_size=(120, 40))
+            st['voxel'].setFillColor([vox_color_val, vox_color_val, vox_color_val])
+            # print(vox_color_val)
 
         
         yield From(asyncio.sleep(G['EX_PR_SLEEPTIME']))
@@ -1542,7 +1602,9 @@ def HandleEMGLine(G, st, CP):
     
     
     # this will make it run for the specified time amount...
-    while curtime < tmax:
+    # while curtime < tmax:
+    # will automatically terminate once G['DOEMGLOOP'] is set to False.
+    while G['DOEMGLOOP']:
         
         running_counter+=1
         # time.sleep(G['EX_PR_SLEEPTIME'])
@@ -1716,7 +1778,7 @@ def GenTestSignalEMG(G, st, CP):
 def pickRandomJitter(G, st, CP):
     '''
     This function will pick a value between G['TJITT'][0] and G['TJITT'][1]
-    And has been implemented to add the jitter time between triaks
+    And has been implemented to add the jitter time between trials
     '''
     
     e=G['EX_TJITT'][1]
@@ -1840,7 +1902,9 @@ def LineCalculations(G, st, CP):
     
     nf_line.setVertices((0, 0)) # this should reset it without this being re-initialized again/
     # self.st['nf_line'][0] = visual.ShapeStim(self.win, vertices=[(0, 0)], closeShape=False, lineColor='lightblue', size=self.scaling, lineWidth=0)
-    patches[:]=[]  # empty this list
+    
+    del(patches[:])  # better way of deleting stuff.
+    # patches[:]=[]  # empty this list
     # self.st['patches'] = []
     
 
@@ -1862,7 +1926,7 @@ def LineCalculations(G, st, CP):
     
     if ypos_for_color > thrContainer[0]:
         # make a new patch..
-        G['eh'].send_message('b_nf_above')
+        # G['eh'].send_message('b_nf_above')
         rnew, gnew, bnew = my_color_calculator(hb, he, thr, colorgap, ypos_for_color, 1, -1)   
         patch_color = (rnew, gnew, bnew)    
         
@@ -1875,7 +1939,7 @@ def LineCalculations(G, st, CP):
         newpatch = visual.ShapeStim(win, vertices=patch_vert, fillColor=patch_color, size=scaling, lineWidth=0)
         patches.append(newpatch)
     else:
-        G['eh'].send_message('b_nf_below')
+        # G['eh'].send_message('b_nf_below')
         ABOVE_PREV = False
     
     
@@ -1948,9 +2012,9 @@ def LineCalculations(G, st, CP):
             
             else:
                 
-                G['eh'].send_message('e_nf_below')
-                G['eh'].send_message('nf_goingup')
-                G['eh'].send_message('b_nf_above')
+                # G['eh'].send_message('e_nf_below')
+                # G['eh'].send_message('nf_goingup')
+                # G['eh'].send_message('b_nf_above')
                 patch_vert=[]
                 old_xpos = vertices[-2][0]
                 old_ypos = vertices[-2][1]
@@ -1979,9 +2043,9 @@ def LineCalculations(G, st, CP):
                 pass 
             else:
                 
-                G['eh'].send_message('e_nf_above')
-                G['eh'].send_message('nf_goingdown')
-                G['eh'].send_message('b_nf_below')
+                # G['eh'].send_message('e_nf_above')
+                # G['eh'].send_message('nf_goingdown')
+                # G['eh'].send_message('b_nf_below')
                 
                 old_xpos = vertices[-2][0]
                 old_ypos = vertices[-2][1]
@@ -2005,9 +2069,11 @@ def LineCalculations(G, st, CP):
 
     # markers, III
     if ylist[-1] > thrContainer[0]:
-        G['eh'].send_message('e_nf_above')
+        pass
+        # G['eh'].send_message('e_nf_above')
     else:
-        G['eh'].send_message('e_nf_below')
+        pass
+        # G['eh'].send_message('e_nf_below')
         
     # is_won = check_win_condition(CP, tlist, ylist, thrlist)
     # this_staircase.addResponse(1-is_won)
@@ -2116,10 +2182,10 @@ def ThermoCalculations(G, st, CP):
     # markers, I:    
     if ypos > thrContainer[0]:
         ABOVE_PREV = True
-        G['eh'].send_message('b_nf_above')
+        # G['eh'].send_message('b_nf_above')
     else:
         ABOVE_PREV = False
-        G['eh'].send_message('b_nf_below')
+        # G['eh'].send_message('b_nf_below')
     
     
     
@@ -2145,16 +2211,18 @@ def ThermoCalculations(G, st, CP):
             if ABOVE_PREV==True:
                 pass
             else:
-                G['eh'].send_message('e_nf_below')
-                G['eh'].send_message('nf_goingup')
-                G['eh'].send_message('b_nf_above')
+                pass
+                # G['eh'].send_message('e_nf_below')
+                # G['eh'].send_message('nf_goingup')
+                # G['eh'].send_message('b_nf_above')
                 
         else:
             ABOVE=False
             if ABOVE_PREV==True:
-                G['eh'].send_message('e_nf_above')
-                G['eh'].send_message('nf_goingdown')
-                G['eh'].send_message('b_nf_below')
+                pass
+                # G['eh'].send_message('e_nf_above')
+                # G['eh'].send_message('nf_goingdown')
+                # G['eh'].send_message('b_nf_below')
             else:
                 pass
                 
@@ -2187,9 +2255,11 @@ def ThermoCalculations(G, st, CP):
         
     # markers, III
     if ylist[-1] > thrContainer[0]:
-        G['eh'].send_message('e_nf_above')
+        pass
+        # G['eh'].send_message('e_nf_above')
     else:
-        G['eh'].send_message('e_nf_below')
+        pass
+        # G['eh'].send_message('e_nf_below')
 
 
     is_won = check_win_condition(CP, tlist, ylist, thrlist)
@@ -2272,10 +2342,10 @@ def SquareCalculations(G, st, CP):
     # markers, I:    
     if ypos > thrContainer[0]:
         ABOVE_PREV = True
-        G['eh'].send_message('b_nf_above')
+        # G['eh'].send_message('b_nf_above')
     else:
         ABOVE_PREV = False
-        G['eh'].send_message('b_nf_below')
+        # G['eh'].send_message('b_nf_below')
     
     
     tlist=[]  # needed to calculate the win condition
@@ -2300,16 +2370,18 @@ def SquareCalculations(G, st, CP):
             if ABOVE_PREV==True:
                 pass
             else:
-                G['eh'].send_message('e_nf_below')
-                G['eh'].send_message('nf_goingup')
-                G['eh'].send_message('b_nf_above')
+                pass
+                # G['eh'].send_message('e_nf_below')
+                # G['eh'].send_message('nf_goingup')
+                # G['eh'].send_message('b_nf_above')
                 
         else:
             ABOVE=False
             if ABOVE_PREV==True:
-                G['eh'].send_message('e_nf_above')
-                G['eh'].send_message('nf_goingdown')
-                G['eh'].send_message('b_nf_below')
+                pass
+                # G['eh'].send_message('e_nf_above')
+                # G['eh'].send_message('nf_goingdown')
+                # G['eh'].send_message('b_nf_below')
             else:
                 pass
                 
@@ -2336,9 +2408,11 @@ def SquareCalculations(G, st, CP):
 
     # markers, III
     if ylist[-1] > thrContainer[0]:
-        G['eh'].send_message('e_nf_above')
+        pass
+        #G['eh'].send_message('e_nf_above')
     else:
-        G['eh'].send_message('e_nf_below')
+        pass
+        # G['eh'].send_message('e_nf_below')
 
 
     is_won = check_win_condition(CP, tlist, ylist, thrlist)
@@ -2505,7 +2579,11 @@ def handle_exception(f, trialType, G, st, CP, ex, loop):
         loop.stop()  # stops the loop, gives an error for that, too.
 
 
-    
+
+# import memory_profiler
+# from memory_profiler import profile
+
+# @profile
 @asyncio.coroutine
 def runTrial(trialType, G, st, CP, ex, loop):
     
@@ -2515,25 +2593,57 @@ def runTrial(trialType, G, st, CP, ex, loop):
     Things start up concurrently by using the asyncio-like routines.
     '''
 
+
     print('---->' + trialType)
     # print(trialType)
     # print(CP['TJITT'][0])
+    # we can add the EMG in here, maybe, or run it only for certain parts?
     #win = G['win']
     #st = G['st']
     #SCALING = G['scaling']
     #PATCHCOLOR = G['patchcolor']
     # the structure of the experiment is already within the data sctructure, and I make use of that.
+
+
+    if G['EX_DO_EMG']:
+        # starting up the EMG program. This is better than running an EMG program for each sub-component
+        # of the trial, since each addition to the loop somehow raises the memory.
+        # I don't see what the cause is, though. It might be making copies
+        # of G, st, CP. But that would not make too much sense!
+        G['DOEMGLOOP'] = True
+        if G['EX_HANDLE_EXCEPTIONS']:
+            loop.create_task(handle_exception_pr(HandleEMGLine, G, st, CP, loop))
+        else:
+            loop.create_task(HandleEMGLine(G, st, CP))
+        # so instead of setting a specific time for a program, an approach should/could be to 
+        # separately start and stop programs! # or -- support both functionalities...
+
+
     for part in ex[trialType]['sequence']:
         
         # so depending on trialType and part, we can figure out which code to send.
         # and thus, here we 'prime' win to call_on_flip our event handler, just like before.
         # so, what IS the message?
         # general
+
         
         CP['TrialType'][0] = trialType
 
         
         programs, tdur, stims, messages_start, messages_stop = ex[trialType][part]
+
+        # should we do the EMG program (also at other places)
+        if G['EX_DO_EMG']:
+            for emg_stim_component in [st['emg_feedback_window'], st['emg_feedback'], st['emg_feedback_thresh']]:
+                if emg_stim_component not in stims:
+                    stims.append(emg_stim_component)
+        # should we also draw the calibration voxel??
+        # it needs a more general framework where the experiment is
+        # subdivided into several components, so we won't have to artificually manufactur things like this.
+        if G['EX_MAKE_FEEDBACK_VOXEL']:
+            if st['voxel'] not in stims:
+                stims.append(st['voxel'])
+
         
         CP['CURRENTPART'][0] = part
         CP['CURRENTTIME'][0] = tdur
@@ -2553,7 +2663,7 @@ def runTrial(trialType, G, st, CP, ex, loop):
             print('Jitter Time: %f' % CP['TJITT'][0])
         
         for message in messages_start:
-            G['win'].callOnFlip(G['eh'].send_message,message)
+            G['win'].callOnFlip(G['eh'].send_message, message)
 
         if isinstance(tdur,list):  # in case we have set t using CP (control parameter)
             tdur=tdur[0]
@@ -2561,8 +2671,11 @@ def runTrial(trialType, G, st, CP, ex, loop):
         # start the program or programs, if there are any, using ASYNC!!
         for pitem in programs:
             # yield From(asyncio.async(handle_exception_pr(pitem, G, st, CP, loop)))
-            # if pitem is not pr['HandleEMGLine']:
-            loop.create_task(handle_exception_pr(pitem, G, st, CP, loop))
+            if G['EX_HANDLE_EXCEPTIONS']:
+                loop.create_task(handle_exception_pr(pitem, G, st, CP, loop))
+            else:
+                loop.create_task(pitem(G, st, CP))
+
             yield From(asyncio.sleep(0))
     
         # print('debug: ' + part + 'start')    
@@ -2583,9 +2696,23 @@ def runTrial(trialType, G, st, CP, ex, loop):
         for message in messages_stop:
             G['eh'].send_message(message)
             
+
+
+    if G['EX_DO_EMG']:
+        # starting up the EMG program. This is better than running an EMG program for each sub-component
+        # of the trial, since each addition to the loop somehow raises the memory.
+        # I don't see what the cause is, though. It might be making copies
+        # of G, st, CP. But that would not make too much sense!
+        G['DOEMGLOOP'] = False # this should stop the HandleEMG Program.
+        # this subprocess should now stop...
         # print('debug: ' + part + 'stop')            
     # print('trial ended!')
-        
+    # diagnostics regaring G, st, CP, ex
+    # psychopy logging seems to be in win?
+    # print(['G, st, CP, ex:'])
+    # for item in [G, st, CP, ex]:
+    #     print(sys.get_sizeof(item))
+    #     print('\n')
 
 
 

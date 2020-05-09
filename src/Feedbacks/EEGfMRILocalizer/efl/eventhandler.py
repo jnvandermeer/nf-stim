@@ -143,7 +143,7 @@ class eventHandler(multiprocessing.Process):
         self.LPTTriggerWaiting=float(LPTTriggerWaiting)
         self.printToTerminal=printToTerminal
         self.printToTerminalAllowed=range(printToTerminalAllowed[0], printToTerminalAllowed[1])
-        self.sendviaLSL=True
+        self.sendviaLSL=False
         
             
         self._queue = multiprocessing.Queue()

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Stimulation
+Exec=bash -c 'cd /home/nfcontrol/nf/nf-stim; ./start_st.sh;$SHELL'
+Comment=Start Spyder
+Terminal=true
+Type=Application
+Name[en_AU]=Stimulation
+Icon=/home/nfcontrol/nf/nf-stim/pyff-logo.png

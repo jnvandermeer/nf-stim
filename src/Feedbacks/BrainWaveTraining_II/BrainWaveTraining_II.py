@@ -70,7 +70,15 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.fontheight=200
         
         self.STARTKEYS=['return','t']           # handy for the fmri
-        
+
+        self.EX_HANDLE_EXCEPTIONS = True        # do we wish the loop to terminate when something goes wrong (at the price of higher overhead)?
+        self.EX_DO_EMG = True                   # give the EMG Feedback + start EMG Program -- or NOT!
+        self.EX_LOGLEVEL = 'DATA'
+        self.EX_MAKE_FEEDBACK_VOXEL = False      # make a little voxel to be used by photo sensor
+        self.EX_MAKE_FEEDBACK_VOXEL_SIZE = 0.05       # set the vox size of the feedback voxel, so we can make it bigger or smaller to fit the diode.
+        self.EX_MAKE_FEEDBACK_VOXEL_SCALING = 1.0 # multiplication factor, to enhance differences of the FB signal.. a scaling.
+        self.EX_MAKE_FEEDBACK_VOXEL_OFFSET = 0.0 # offset control...
+
         self.EX_THRLINEWIDTH = 2
         self.EX_COLORGAP = 1
         self.EX_TVSP = 0.4
@@ -104,7 +112,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.EX_TJITT = [0.8, 1.3]
         self.EX_TFB = 12.0
         self.EX_POINTS_REWARD = 10
-        self.EX_PR_SLEEPTIME = 0.01
+        self.EX_PR_SLEEPTIME = 0.0005
         self.EX_TESTSIGNALTYPE = 'sin'
         self.EX_BUTTONS = ['lctrl', 'rctrl']  # the button codes coming out of event.getStim()
         self.EX_INSTR = 'Upregulate: Focus on moving upwards / more green'    
@@ -134,8 +142,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         self.LOG_PATHFILE_EVENT='log/evsbwt.log'  # for if you want to change this...
                 
         # take care of our monitor-screen-display...
-        self.MONITOR_PIXWIDTH=1280
-        self.MONITOR_PIXHEIGHT=1024
+        self.MONITOR_PIXWIDTH=800
+        self.MONITOR_PIXHEIGHT=600
         self.MONITOR_WIDTH=40.  # width of screen
         self.MONITOR_HEIGHT=30.  # height of screen
         self.MONITOR_DISTANCE=70.  # distance to screen
@@ -241,6 +249,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         v['fontheight']                     = self.fontheight
         
         v['STARTKEYS']                      = self.STARTKEYS
+
+        v['EX_HANDLE_EXCEPTIONS']           = self.EX_HANDLE_EXCEPTIONS
         
         v['EX_THRLINEWIDTH']                = self.EX_THRLINEWIDTH
         v['EX_COLORGAP']                    = self.EX_COLORGAP
@@ -285,6 +295,13 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
 
         v['EX_SND_LOWESTTONE']              = self.EX_SND_LOWESTTONE
         v['EX_SND_HIGHESTTONE']             = self.EX_SND_HIGHESTTONE
+
+        v['EX_DO_EMG']                      = self.EX_DO_EMG
+        v['EX_LOGLEVEL']                    = self.EX_LOGLEVEL
+        v['EX_MAKE_FEEDBACK_VOXEL']         = self.EX_MAKE_FEEDBACK_VOXEL
+        v['EX_MAKE_FEEDBACK_VOXEL_SIZE']    = self.EX_MAKE_FEEDBACK_VOXEL_SIZE
+        v['EX_MAKE_FEEDBACK_VOXEL_SCALING'] = self.EX_MAKE_FEEDBACK_VOXEL_SCALING
+        v['EX_MAKE_FEEDBACK_VOXEL_OFFSET']  = self.EX_MAKE_FEEDBACK_VOXEL_OFFSET
 
         v['EX_EMG_THERMOWIDTH']             = self.EX_EMG_THERMOWIDTH
         v['EX_EMG_THERMOHEIGHT']            = self.EX_EMG_THERMOHEIGHT
@@ -366,11 +383,33 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
 
 
         # logging...
+        # loglevel control
+        
         logging.setDefaultClock(G['mainClock'])
+
+        # Warning should likely be default, otherwise the psychopy log will simply overflow indefinitely.
+        if G['EX_LOGLEVEL'] == 'WARNING': 
+            logging.console.setLevel(logging.WARNING)
+        elif G['EX_LOGLEVEL'] == 'DATA':
+            logging.console.setLevel(logging.DATA)
+        elif G['EX_LOGLEVEL'] == 'WARNING': 
+            logging.console.setLevel(logging.EXP)
+        else:
+            raise Exception('G_EX_LOGLEVEL not correctly defined')
+
         newLogFile = create_incremental_filename(G['v']['LOG_PATHFILE'])
-        expLogger = logging.LogFile(newLogFile, logging.EXP) # the correct loglevel should be EXP!
+
+        if G['EX_LOGLEVEL'] == 'WARNING':
+            expLogger = logging.LogFile(newLogFile, logging.WARNING) # the correct loglevel should be EXP!
+        elif G['EX_LOGLEVEL'] == 'EXP':
+            expLogger = logging.LogFile(newLogFile, logging.EXP) # the correct loglevel should be EXP!
+        elif G['EX_LOGLEVEL'] == 'DATA':
+            expLogger = logging.LogFile(newLogFile, logging.DATA) # the correct loglevel should be EXP!
+        else:
+            raise Exception('G_EX_LOGLEVEL not correctly defined')
+
         print(expLogger)
-        logging.LogFile(newLogFile, logging.EXP) # the correct loglevel should be EXP!
+
         print('made new logfile: ' + newLogFile)
         for key in G['v'].keys():
             logging.data("{key}: {value}".format(key=key, value=G['v'][key]))
@@ -436,6 +475,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         for t_i in my_trial_sequence:
                 self.runlist = iter([my_trial_definitions[i] for i in my_trial_sequence])
     
+        starting_text(G, 'Press to Begin...')
+        starting_text(G, 'Ready...')
         
         # the ev loop we're going to be using..
         loop=asyncio.new_event_loop()
@@ -452,8 +493,7 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         G['cl']=clock.Clock()   # init the trial-by-trial clock here and put into G...
         
-        starting_text(G, 'Press to Begin...')
-        starting_text(G, 'Ready...')
+
         
 
     # this is called AFTER main loop...
@@ -461,12 +501,35 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         MostBasicPsychopyFeedback.post_mainloop(self)
         
         # tell that we are ready -- use function imported from StopVigilanceTask
+        # import shelve
+        # OK -- DUMP all the globals and locals
+
+        # my_shelf = shelve.open('all_vars_lastrun_globals.pkl', 'n')
+        # for key in dir():
+        #    try:
+        #        my_shelf[key] = globals()[key]
+        #    except Exception:
+        #        pass
+        # my_shelf.close()
+
+        # filename='all_vars_lastrun_locals.pkl'
+        # my_shelf = shelve.open(filename, 'n')
+        # for key in dir():
+        #    try:
+        #        my_shelf[key] = locals()[key]
+        #    except TypeError:
+        #        pass
+        # my_shelf.close()
+        # from pudb.remote import set_trace
+        # set_trace(term_size=(125, 40))
         
+
+
         
         self.G['eh'].shutdown()
         self.G['eh'].join()
         
-        finish_text(self.G)
+        finish_text(self.G, self.st)
         self.G['logging'].flush()
         self.G['win'].close()
 
@@ -484,6 +547,9 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
     # a 'tick' == ONE passage through the main loop (which is a 'while True' loop, basically...)
     
     # since tick will be called repeatedly, this is fine.
+    # import memory_profiler
+    # from memory_profiler import profile
+    # @profile    
     def tick(self):
 
         # getting in the variables:
@@ -504,10 +570,19 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
             print(trialType)
             print(CP['TJITT'][0])
             # trialType, G, st, CP, ex, loop
-            self.loop.run_until_complete(asyncio.wait([asyncio.async(handle_exception(runTrial,trialType, G, st, CP, ex, loop))]))   
+            if G['EX_HANDLE_EXCEPTIONS']:
+                self.loop.run_until_complete(asyncio.wait([asyncio.async(handle_exception(runTrial,trialType, G, st, CP, ex, loop))]))
+            else:
+                self.loop.run_until_complete(asyncio.wait([asyncio.async(runTrial(trialType, G, st, CP, ex, loop))]))      
             
             G['logging'].flush()
             
+            del(G)
+            del(ex)
+            del(st)
+            del(CP)
+            # del(self.loop)
+
             
         except StopIteration:
             # stop the experiment when the iterable is ready.
