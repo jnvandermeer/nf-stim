@@ -148,6 +148,24 @@ class eventHandler(multiprocessing.Process):
         # self.expLogger = logging.LogFile(newLogFile, logging.EXP) # the correct loglevel should be EXP!
         
         # time.sleep(10)
+
+        self._has_lsl = False
+        try:
+            from pylsl import StreamInfo, StreamOutlet
+            self._has_lsl = True
+        except:
+            self.logger.warning("Could not import LabStreamingLayer. Ignore, if you don't want to send LSL Markers.")
+
+        if self._has_lsl:
+            try:
+                # name: PyffMarkerStream, content-type: Markers,
+                # channels: 1, irregular sampling rate,
+                # type: string, id: pyffmarker
+                info = StreamInfo('EventMarkerStream', 'Markers', 1, 0, 'string', 'eventmarkerstream')
+                self._lsl_outlet = StreamOutlet(info)
+            except:
+                self.logger.error("Unable to Create LSL Marker Outlet, but LSL is installed.")
+                self._has_lsl = False
         
 
 
@@ -237,7 +255,10 @@ class eventHandler(multiprocessing.Process):
                     
                     break
                     
-                
+
+                if self._has_lsl:
+                    self._lsl_outlet.push_sample([str(code_to_send)])
+                        
                 # print(message)
                 # print(code_to_send)
                 if self.sendParallel:

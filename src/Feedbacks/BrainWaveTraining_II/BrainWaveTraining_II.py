@@ -635,8 +635,6 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
         
         for key in sent_data.keys():
             
-            
-            
             if key in ['hit', 'hitError']:
                 self.CP[key][0].append(sent_data[key])
                 if key == 'hit':
@@ -657,6 +655,8 @@ class BrainWaveTraining_II(MostBasicPsychopyFeedback):
                 if hasattr(self, 'G'):
                     if hasattr(self.G, 'eh'):
                         self.G['eh'].send_message('recv_thr')
+                # LineCheck(self.G, self.st, self.CP) ... you don't actually
+                # want the line to jump around if you change the threshold.
   
 
       

@@ -1863,6 +1863,8 @@ def LineCalculations(G, st, CP):
     
     '''
     
+
+
     win = G['win']  # our window..
     tmax = G['EX_TFB']   # this is how long we should display the stimulus on screen.
     thrContainer = CP['thrContainer']  # this is the threshold -- probably also set by on_control_event...
@@ -1879,8 +1881,7 @@ def LineCalculations(G, st, CP):
     
     # corr_st = st['st_correct']
     # incorr_st = st['st_incorrect']
-    
-    
+    LineCheck(G, st, CP)
     
     
     nf_line = st['nf_line'][0]        # this is a shapestim
@@ -2101,7 +2102,7 @@ def LineCalculations(G, st, CP):
     
 @asyncio.coroutine    
 def LineCheck(G, st, CP):
-    ''' This should just re-draw the line according to whatps in CP['Threshold'][0]
+    ''' This should just re-draw the line according to whatps in CP['thrContainer'][0]
     '''
     thrline = st['thrline']  # set positions...
     for l in thrline:
