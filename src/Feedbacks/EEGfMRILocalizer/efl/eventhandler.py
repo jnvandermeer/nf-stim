@@ -304,7 +304,7 @@ class eventHandler(multiprocessing.Process):
 
                 if self.sendviaLSL:
                     # we put it into the LSL stream!
-                    outlet.push_sample([code_to_send])
+                    outlet.push_sample([str(code_to_send)])
                 
                 # print(message)
                 # print(code_to_send)

@@ -50,7 +50,11 @@ import random
 
 
 # import pyglet
+# from pudb import remote
+# remote.set_trace()
+# breakpoint()
 from psychopy import visual, clock, data, event, logging, sound, monitors
+
 import numpy as np
 
 # the assync stuff:
@@ -122,6 +126,10 @@ def init_G():  # so we do this ourselves in the pyff framework:
         v['VIS_checkerSize']=1.5
         v['VIS_checkerSpeedMultiplier']=1.0
         v['EYESCLOSED_TIME']=25.
+
+        v['CAL_DO_PRE_EOEC']=True
+        v['CAL_DO_POST_EOEC']=True
+        v['CAL_DO_ARTIFACT_PROGRAM']=True
         
         v['EVENT_destip']='127.0.0.1'
         v['EVENT_destport']=6050

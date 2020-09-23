@@ -11,7 +11,10 @@ import pickle
 # visual, sound, core, data, event and logging are the crucial ones.
 import pygame
 import psychopy
-from psychopy import locale_setup, sound, gui, visual, core, data, event, logging # I guess this is the best way?
+# from pudb import remote
+# remote.set_trace()
+# from psychopy import locale_setup, sound, gui, visual, core, data, event, logging # I guess this is the best way?
+from psychopy import locale_setup, sound, visual, core, data, event, logging # I guess this is the best way?
 
 
 # some helpers:
@@ -86,6 +89,10 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
         self.VIS_checkerSize=1.5
         self.VIS_checkerSpeedMultiplier=1.0
         self.EYESCLOSED_TIME=25.
+
+        self.CAL_DO_PRE_EOEC=True       
+        self.CAL_DO_POST_EOEC=True      
+        self.CAL_DO_ARTIFACT_PROGRAM=True
         
         
         self.EVENT_destip='127.0.0.1'
@@ -156,6 +163,12 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
         v['VIS_checkerSize']                =self.VIS_checkerSize
         v['VIS_checkerSpeedMultiplier']     =self.VIS_checkerSpeedMultiplier
         v['EYESCLOSED_TIME']                =self.EYESCLOSED_TIME
+
+
+        v['CAL_DO_PRE_EOEC']                self.CAL_DO_PRE_EOEC
+        v['CAL_DO_POST_EOEC']               self.CAL_DO_POST_EOEC
+        v['CAL_DO_ARTIFACT_PROGRAM']        self.CAL_DO_ARTIFACT_PROGRAM
+        
         
         v['EVENT_destip']                   =self.EVENT_destip
         v['EVENT_destport']                 =self.EVENT_destport
@@ -272,12 +285,18 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
             
             wait_for_key(G)
             
-            measure_artifact_program(G)
+        v['CAL_DO_PRE_EOEC']                self.CAL_DO_PRE_EOEC
+        v['CAL_DO_POST_EOEC']               self.CAL_DO_POST_EOEC
+            if self.CAL_DO_ARTIFACT_PROGRAM:
+                measure_artifact_program(G)
             
             test_buttons(G)
             instr_screen0(G)
-            eo_stim(G)
-            ec_stim(G)
+
+            if self.CAL_DO_PRE_EOEC:
+                eo_stim(G)
+                ec_stim(G)
+
             logging.flush()
 
             
@@ -291,9 +310,11 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
             # print('----><----')
             run_main_loop(G)
             logging.flush()
-        
-            eo_stim(G)
-            ec_stim(G)
+
+            if self.CAL_DO_POST_EOEC:        
+                eo_stim(G)
+                ec_stim(G)
+
             end_task(G)
             logging.flush()
             
