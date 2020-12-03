@@ -165,9 +165,9 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
         v['EYESCLOSED_TIME']                =self.EYESCLOSED_TIME
 
 
-        v['CAL_DO_PRE_EOEC']                self.CAL_DO_PRE_EOEC
-        v['CAL_DO_POST_EOEC']               self.CAL_DO_POST_EOEC
-        v['CAL_DO_ARTIFACT_PROGRAM']        self.CAL_DO_ARTIFACT_PROGRAM
+        v['CAL_DO_PRE_EOEC']                =self.CAL_DO_PRE_EOEC
+        v['CAL_DO_POST_EOEC']               =self.CAL_DO_POST_EOEC
+        v['CAL_DO_ARTIFACT_PROGRAM']        =self.CAL_DO_ARTIFACT_PROGRAM
         
         
         v['EVENT_destip']                   =self.EVENT_destip
@@ -285,8 +285,8 @@ class EEGfMRILocalizer(MostBasicPsychopyFeedback):
             
             wait_for_key(G)
             
-        v['CAL_DO_PRE_EOEC']                self.CAL_DO_PRE_EOEC
-        v['CAL_DO_POST_EOEC']               self.CAL_DO_POST_EOEC
+        # v['CAL_DO_PRE_EOEC']                self.CAL_DO_PRE_EOEC
+        # v['CAL_DO_POST_EOEC']               self.CAL_DO_POST_EOEC
             if self.CAL_DO_ARTIFACT_PROGRAM:
                 measure_artifact_program(G)
             
